@@ -197,7 +197,6 @@ public class FallDet extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		// Be sure to call the super class.
 		super.onCreate(savedInstanceState);
-
 		mGraphView = new GraphView(this);
 		setContentView(mGraphView);
 
@@ -209,10 +208,10 @@ public class FallDet extends Activity {
 		mSensorManager.connectSimulator();
 
 		// get a handle on the location manager
-		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
-				0, new LocationUpdateHandler());
+//		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//
+//		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
+//				0, new LocationUpdateHandler());
 	}
 
 	public class LocationUpdateHandler implements LocationListener {

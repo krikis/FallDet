@@ -3,11 +3,13 @@ package esposito.fall_detection;
 import java.util.Date;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.os.Bundle;
 
 import android.location.*;
 import android.content.Context;
-import android.view.View;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 //import android.hardware.Sensor;
 //import android.hardware.SensorEvent;
 //import android.hardware.SensorEventListener;
@@ -57,6 +59,8 @@ public class FallDetection extends Activity {
 		private final float OriConstraint = 0.75f;
 		private float OriValues[] = new float[256];
 		private int ori_index = 0;
+		boolean fall_detected = false;
+		boolean fall_handling = false;
 		private float mYOffset;
 		private float mXOffset;
 		private float mMaxX;
@@ -174,8 +178,29 @@ public class FallDetection extends Activity {
 					}
 					canvas.drawBitmap(mBitmap, 0, 0, null);
 				}
+				if (fall_detected)
+					fall_handler();
 			}
 		}
+		
+		// Displays a dialog that a fall has been detected.
+		public void fall_handler() {
+			fall_handling = true; // stop graph updates while handling fall
+			ProgressDialog dialog = new ProgressDialog(FallDetection.this);
+			dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			dialog.setMessage("Click cancel to prevent a notification from being sent.");
+			dialog.setTitle("A fall was Detected!");
+			dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel", buttonListener);
+			dialog.show();
+		}
+		
+		// Create an anonymous implementation of OnClickListener
+		private OnClickListener buttonListener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				fall_handling = false;			
+			}
+		};
 
 		public void onSensorChanged(SensorEvent event) {
 			// Log.d(TAG, "sensor: " + sensor + ", x: " + values[0] + ", y: " +
@@ -258,8 +283,8 @@ public class FallDetection extends Activity {
 							else if (date.getTime() - OriStartTime < OriWindow) {
 								OriValues[ori_index++] = ori;
 								canvas.drawLine(mLastX, mYOffset * 3
-										+ 90 * mScale[2] - 1, newX, mYOffset * 3
-										+ 90 * mScale[2] - 1,
+										+ 90 * mScale[2] - 2, newX, mYOffset * 3
+										+ 90 * mScale[2] - 2,
 										paint);
 							} else {
 								int count = 0;
@@ -272,13 +297,15 @@ public class FallDetection extends Activity {
 									paint.setColor(0xFF0000FF);
 									canvas.drawText("v", newX - 4, mYOffset * 3
 											+ 90 * mScale[2] - 2, paint);
+									fall_detected = true;
 								}
 								// Reset variables for next fall
 								OriStartTime = VveTime = RssTime = ori_index = 0;
 							}
 						}
 					}
-					invalidate();
+					if (!fall_handling)
+						invalidate();
 				}
 			}
 		}

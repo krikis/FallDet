@@ -41,11 +41,14 @@ public class FallDetection extends Activity {
 		private float mScale[] = new float[3];
 		private int mColors[] = new int[3 * 2];
 		private float mLastX;
+		private final float RssTreshold = 2.8f;
 		private float mRssValues[] = new float[256];
 		private int mRssCount = 0;
 		private int mRssIndex = 0;
 		private long time = 0;
 		private final float VveWindow = 0.6f;
+		private final float VveTreshold = -0.7f;
+		private final float OriTreshold = 60;
 		private float mYOffset;
 		private float mXOffset;
 		private float mMaxX;
@@ -124,12 +127,12 @@ public class FallDetection extends Activity {
 						cavas.drawText("45", 0, yoffset * 3 + 45 * mScale[2], paint);
 						cavas.drawText("90", 0, yoffset * 3 + 90 * mScale[2], paint);
 						paint.setColor(0xFFFF0000);
-						float ytresholdRss = yoffset + 2.8f * SensorManager.STANDARD_GRAVITY * mScale[0];
+						float ytresholdRss = yoffset + RssTreshold * SensorManager.STANDARD_GRAVITY * mScale[0];
 						cavas.drawLine(mXOffset, ytresholdRss, maxx, ytresholdRss, paint);
-						float ytresholdVve = yoffset * (3.0f/2) - 0.7f * SensorManager.STANDARD_GRAVITY * mScale[1];
+						float ytresholdVve = yoffset * (3.0f/2) + VveTreshold * SensorManager.STANDARD_GRAVITY * mScale[1];
 						cavas.drawLine(mXOffset, ytresholdVve, maxx, ytresholdVve,
 								paint);
-						float ytresholdOri = yoffset * 3 + 60 * mScale[2];
+						float ytresholdOri = yoffset * 3 + OriTreshold * mScale[2];
 						cavas.drawLine(mXOffset, ytresholdOri, maxx, ytresholdOri,
 								paint);
 					}
@@ -152,6 +155,10 @@ public class FallDetection extends Activity {
 						float rss = (float) Math.sqrt(Math.pow(event.values[0], 2) + 
 													  Math.pow(event.values[1], 2) + 
 													  Math.pow(event.values[2], 2));
+						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY) {
+							paint.setColor(0xFF0000FF);
+							canvas.drawText("v", newX - 3, mYOffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						}
 						float draw_rss = mYOffset + rss * mScale[0];
 						paint.setColor(mColors[0]);
 						canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
@@ -173,6 +180,10 @@ public class FallDetection extends Activity {
 							vve += mRssValues[i];
 						}
 						vve = (vve * VveWindow) / mRssCount;
+						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY) {
+							paint.setColor(0xFF0000FF);
+							canvas.drawText("^", newX - 3, mYOffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1] - 10, paint);
+						}
 						vve = mYOffset * (3.0f/2) + vve * mScale[1];
 						paint.setColor(mColors[1]);
 						canvas.drawLine(mLastX, mLastValues[1], newX, vve,

@@ -3,13 +3,18 @@ package esposito.fall_detection;
 import java.util.Date;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 
 import android.location.*;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.util.Log;
+import android.view.View;
 //import android.hardware.Sensor;
 //import android.hardware.SensorEvent;
 //import android.hardware.SensorEventListener;
@@ -28,10 +33,17 @@ import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
 public class FallDetection extends Activity {
 
+	static final int PROGRESS_DIALOG = 0;
+	ProgressThread progressThread;
+	ProgressDialog progressDialog;
 	private SensorManagerSimulator mSensorManager;
 	private GraphView mGraphView;
 	private static final String MAP_API_KEY = "06cz479V1NDWE1O7nSLXCSi0AbVf-cnqKmTYdWg";
 	private LocationManager locationManager;
+	boolean fall_handling = false;
+	boolean fall_detected = false;
+	public double lat;
+	public double lon;
 
 	private class GraphView extends View implements SensorEventListener {
 		private Bitmap mBitmap;
@@ -59,8 +71,6 @@ public class FallDetection extends Activity {
 		private final float OriConstraint = 0.75f;
 		private float OriValues[] = new float[256];
 		private int ori_index = 0;
-		boolean fall_detected = false;
-		boolean fall_handling = false;
 		private float mYOffset;
 		private float mXOffset;
 		private float mMaxX;
@@ -182,25 +192,6 @@ public class FallDetection extends Activity {
 					fall_handler();
 			}
 		}
-		
-		// Displays a dialog that a fall has been detected.
-		public void fall_handler() {
-			fall_handling = true; // stop graph updates while handling fall
-			ProgressDialog dialog = new ProgressDialog(FallDetection.this);
-			dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			dialog.setMessage("Click cancel to prevent a notification from being sent.");
-			dialog.setTitle("A fall was Detected!");
-			dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel", buttonListener);
-			dialog.show();
-		}
-		
-		// Create an anonymous implementation of OnClickListener
-		private OnClickListener buttonListener = new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				fall_handling = false;			
-			}
-		};
 
 		public void onSensorChanged(SensorEvent event) {
 			// Log.d(TAG, "sensor: " + sensor + ", x: " + values[0] + ", y: " +
@@ -218,7 +209,8 @@ public class FallDetection extends Activity {
 								2)
 								+ Math.pow(event.values[1], 2)
 								+ Math.pow(event.values[2], 2));
-						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY && RssTime == 0) {
+						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
+								&& RssTime == 0) {
 							if (VveTime == 0)
 								RssTime = date.getTime();
 							paint.setColor(0xFF0000FF);
@@ -248,7 +240,8 @@ public class FallDetection extends Activity {
 							vve += mRssValues[i];
 						}
 						vve = (vve * VveWindow) / mRssCount;
-						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY && VveTime == 0) {
+						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
+								&& VveTime == 0) {
 							VveTime = date.getTime();
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mYOffset
@@ -282,10 +275,9 @@ public class FallDetection extends Activity {
 								OriStartTime = date.getTime();
 							else if (date.getTime() - OriStartTime < OriWindow) {
 								OriValues[ori_index++] = ori;
-								canvas.drawLine(mLastX, mYOffset * 3
-										+ 90 * mScale[2] - 2, newX, mYOffset * 3
-										+ 90 * mScale[2] - 2,
-										paint);
+								canvas.drawLine(mLastX, mYOffset * 3 + 90
+										* mScale[2] - 2, newX, mYOffset * 3
+										+ 90 * mScale[2] - 2, paint);
 							} else {
 								int count = 0;
 								for (int i = 0; i < ori_index; i++) {
@@ -293,7 +285,8 @@ public class FallDetection extends Activity {
 										count++;
 								}
 								if (count / ori_index >= OriConstraint) {
-									// A fall has been detected => Time to take action!!!
+									// A fall has been detected => Time to take
+									// action!!!
 									paint.setColor(0xFF0000FF);
 									canvas.drawText("v", newX - 4, mYOffset * 3
 											+ 90 * mScale[2] - 2, paint);
@@ -314,6 +307,116 @@ public class FallDetection extends Activity {
 		}
 	}
 
+	protected Dialog onCreateDialog(int id) {
+		switch (id) {
+		case PROGRESS_DIALOG:
+			progressDialog = new ProgressDialog(FallDetection.this);
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			progressDialog
+					.setMessage("Location: " +
+								Double.toString(lat) + " | " + Double.toString(lon) + "\n" +
+							    "Click cancel to prevent a notification from being sent.");
+			progressDialog.setTitle("A fall was Detected!");
+			progressDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel",
+					buttonListener);
+			progressDialog.setMax(10);
+			return progressDialog;
+		default:
+			return null;
+		}
+	}
+
+	@Override
+	protected void onPrepareDialog(int id, Dialog dialog) {
+		switch (id) {
+		case PROGRESS_DIALOG:
+			progressDialog.setProgress(0);
+			progressThread = new ProgressThread(handler);
+			progressThread.start();
+		}
+	}
+
+	// Define the Handler that receives messages from the thread and update the
+	// progress
+	final Handler handler = new Handler() {
+		public void handleMessage(Message msg) {
+			int total = msg.arg1;
+			progressDialog.setProgress(total);
+			if (total >= 10) {
+				// provisory stopper => extend with real message sending
+				fall_handling = fall_detected = false;
+				dismissDialog(PROGRESS_DIALOG);
+				progressThread.setState(ProgressThread.STATE_DONE);
+			}
+		}
+	};
+
+	/** Nested class that performs progress calculations (counting) */
+	class ProgressThread extends Thread {
+		Handler mHandler;
+		final static int STATE_DONE = 0;
+		final static int STATE_RUNNING = 1;
+		int mState;
+		int total;
+
+		ProgressThread(Handler h) {
+			mHandler = h;
+		}
+
+		public void run() {
+			mState = STATE_RUNNING;
+			total = 0;
+			while (mState == STATE_RUNNING) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					Log.e("ERROR", "Thread Interrupted");
+				}
+				Message msg = mHandler.obtainMessage();
+				msg.arg1 = total;
+				mHandler.sendMessage(msg);
+				total++;
+			}
+			total = 0;
+		}
+
+		/*
+		 * sets the current state for the thread, used to stop the thread
+		 */
+		public void setState(int state) {
+			mState = state;
+		}
+	}
+
+	// Create an anonymous implementation of OnClickListener
+	private OnClickListener buttonListener = new DialogInterface.OnClickListener() {
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			fall_handling = fall_detected = false;
+			progressThread.setState(ProgressThread.STATE_DONE);
+		}
+	};
+
+	// Displays a dialog that a fall has been detected.
+	public void fall_handler() {
+		// get a handle on the location manager
+		LocationUpdateHandler locationUpdateHandler = new LocationUpdateHandler();
+		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
+				0, new LocationUpdateHandler());
+		
+		// Uncomment to create a location update for demonstration purposes
+//		Location location = new Location(LocationManager.GPS_PROVIDER);
+//		location.setLatitude(53.240407);
+//		location.setLongitude(6.535999);
+//		location.setTime((new Date()).getTime());
+//		locationUpdateHandler.onLocationChanged(location);
+		
+		fall_handling = true; // stop graph updates while handling fall
+		showDialog(PROGRESS_DIALOG);
+	}
+
 	/**
 	 * Initialization of the Activity after it is first created. Must at least
 	 * call {@link android.app.Activity#setContentView setContentView()} to
@@ -332,21 +435,13 @@ public class FallDetection extends Activity {
 		mSensorManager = SensorManagerSimulator.getSystemService(this,
 				SENSOR_SERVICE);
 		mSensorManager.connectSimulator();
-
-		// get a handle on the location manager
-		// locationManager = (LocationManager)
-		// getSystemService(Context.LOCATION_SERVICE);
-		//
-		// locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-		// 0,
-		// 0, new LocationUpdateHandler());
 	}
 
 	public class LocationUpdateHandler implements LocationListener {
 
 		public void onLocationChanged(Location loc) {
-			int lat = (int) (loc.getLatitude() * 1E6);
-			int lng = (int) (loc.getLongitude() * 1E6);
+			lat = loc.getLatitude();
+			lon = loc.getLongitude();
 		}
 
 		public void onProviderDisabled(String provider) {

@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="lib/sensorsimulator-lib-1.1.0-rc1.jar" sourcepath="/Users/krikis/Documents/Rug/2010-2011/periode3/ub_comp/sensorsimulator-1.1.0-rc1/SensorSimulatorSettings/src"/>
+	<classpathentry kind="lib" path="lib/sensorsimulator-lib-1.1.0-rc1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

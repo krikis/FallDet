@@ -1,4 +1,6 @@
-package esposito.fall_det;
+package esposito.fall_detection;
+
+import java.util.Date;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -22,7 +24,7 @@ import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
 import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
-public class FallDet extends Activity {
+public class FallDetection extends Activity {
 
 	private SensorManagerSimulator mSensorManager;
 	private GraphView mGraphView;
@@ -35,11 +37,15 @@ public class FallDet extends Activity {
 		private Canvas mCanvas = new Canvas();
 		private Path mPath = new Path();
 		private RectF mRect = new RectF();
-		private float mLastValues[] = new float[3 * 2];
-		private float mOrientationValues[] = new float[3];
+		private float mLastValues[] = new float[3];
+		private float mScale[] = new float[3];
 		private int mColors[] = new int[3 * 2];
 		private float mLastX;
-		private float mScale[] = new float[2];
+		private float mRssValues[] = new float[256];
+		private int mRssCount = 0;
+		private int mRssIndex = 0;
+		private long time = 0;
+		private final float VveWindow = 0.6f;
 		private float mYOffset;
 		private float mMaxX;
 		private float mSpeed = 1.0f;
@@ -65,9 +71,10 @@ public class FallDet extends Activity {
 			mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
 			mCanvas.setBitmap(mBitmap);
 			mCanvas.drawColor(0xFFFFFFFF);
-			mYOffset = h * 0.5f;
-			mScale[0] = -(h * 0.5f * (1.0f / (SensorManager.STANDARD_GRAVITY * 2)));
-			mScale[1] = -(h * 0.5f * (1.0f / (SensorManager.MAGNETIC_FIELD_EARTH_MAX)));
+			mYOffset = h / 3.0f;
+			mScale[0] = (float) -(mYOffset * (1.0f / Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3)));
+			mScale[1] = (float) -(mYOffset * (1.0f / ((Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3) - SensorManager.STANDARD_GRAVITY) * VveWindow)));
+			mScale[2] = -(mYOffset * (1.0f / 90));
 			mWidth = w;
 			mHeight = h;
 			if (mWidth < mHeight) {
@@ -93,59 +100,24 @@ public class FallDet extends Activity {
 						final Canvas cavas = mCanvas;
 						final float yoffset = mYOffset;
 						final float maxx = mMaxX;
-						final float oneG = SensorManager.STANDARD_GRAVITY
-								* mScale[0];
 						paint.setColor(0xFFAAAAAA);
 						cavas.drawColor(0xFFFFFFFF);
 						cavas.drawLine(0, yoffset, maxx, yoffset, paint);
-						cavas.drawLine(0, yoffset + oneG, maxx, yoffset + oneG,
+						cavas.drawLine(0, yoffset * (3.0f/2), maxx, yoffset * (3.0f/2),
 								paint);
-						cavas.drawLine(0, yoffset - oneG, maxx, yoffset - oneG,
+						cavas.drawLine(0, yoffset * 3, maxx, yoffset * 3,
+								paint);
+						paint.setColor(0xFFFF0000);
+						float ytresholdRss = yoffset + 2.8f * SensorManager.STANDARD_GRAVITY * mScale[0];
+						cavas.drawLine(0, ytresholdRss, maxx, ytresholdRss, paint);
+						float ytresholdVve = yoffset * (3.0f/2) - 0.7f * SensorManager.STANDARD_GRAVITY * mScale[1];
+						cavas.drawLine(0, ytresholdVve, maxx, ytresholdVve,
+								paint);
+						float ytresholdOri = yoffset * 3 + 60 * mScale[2];
+						cavas.drawLine(0, ytresholdOri, maxx, ytresholdOri,
 								paint);
 					}
 					canvas.drawBitmap(mBitmap, 0, 0, null);
-
-					float[] values = mOrientationValues;
-					if (mWidth < mHeight) {
-						float w0 = mWidth * 0.333333f;
-						float w = w0 - 32;
-						float x = w0 * 0.5f;
-						for (int i = 0; i < 3; i++) {
-							canvas.save(Canvas.MATRIX_SAVE_FLAG);
-							canvas.translate(x, w * 0.5f + 4.0f);
-							canvas.save(Canvas.MATRIX_SAVE_FLAG);
-							paint.setColor(outer);
-							canvas.scale(w, w);
-							canvas.drawOval(mRect, paint);
-							canvas.restore();
-							canvas.scale(w - 5, w - 5);
-							paint.setColor(inner);
-							canvas.rotate(-values[i]);
-							canvas.drawPath(path, paint);
-							canvas.restore();
-							x += w0;
-						}
-					} else {
-						float h0 = mHeight * 0.333333f;
-						float h = h0 - 32;
-						float y = h0 * 0.5f;
-						for (int i = 0; i < 3; i++) {
-							canvas.save(Canvas.MATRIX_SAVE_FLAG);
-							canvas.translate(mWidth - (h * 0.5f + 4.0f), y);
-							canvas.save(Canvas.MATRIX_SAVE_FLAG);
-							paint.setColor(outer);
-							canvas.scale(h, h);
-							canvas.drawOval(mRect, paint);
-							canvas.restore();
-							canvas.scale(h - 5, h - 5);
-							paint.setColor(inner);
-							canvas.rotate(-values[i]);
-							canvas.drawPath(path, paint);
-							canvas.restore();
-							y += h0;
-						}
-					}
-
 				}
 			}
 		}
@@ -157,27 +129,52 @@ public class FallDet extends Activity {
 				if (mBitmap != null) {
 					final Canvas canvas = mCanvas;
 					final Paint paint = mPaint;
-					if (event.type == Sensor.TYPE_ORIENTATION) {
-						for (int i = 0; i < 3; i++) {
-							mOrientationValues[i] = event.values[i];
-						}
-					} else {
+					if (event.type == Sensor.TYPE_ACCELEROMETER) {
 						float deltaX = mSpeed;
 						float newX = mLastX + deltaX;
-
-						int j = (event.type == Sensor.TYPE_MAGNETIC_FIELD) ? 1
-								: 0;
-						for (int i = 0; i < 3; i++) {
-							int k = i + j * 3;
-							final float v = mYOffset + event.values[i]
-									* mScale[j];
-							paint.setColor(mColors[k]);
-							canvas.drawLine(mLastX, mLastValues[k], newX, v,
-									paint);
-							mLastValues[k] = v;
+						// Calculalte RSS
+						float rss = (float) Math.sqrt(Math.pow(event.values[0], 2) + 
+													  Math.pow(event.values[1], 2) + 
+													  Math.pow(event.values[2], 2));
+						rss = mYOffset + rss * mScale[0];
+						paint.setColor(mColors[0]);
+						canvas.drawLine(mLastX, mLastValues[0], newX, rss,
+								paint);
+						mLastValues[0] = rss;
+						// Calculate Vve numeric integral over RSS
+						Date date = new Date();
+						if (time == 0){
+							time = date.getTime();
+							mRssCount++;
+						} else if (date.getTime() - time <= VveWindow * 1000 && mRssCount < mRssValues.length) {
+							mRssIndex = mRssCount++;	
+						} else {
+							mRssIndex = ++mRssIndex % mRssCount;							
 						}
-						if (event.type == Sensor.TYPE_MAGNETIC_FIELD)
-							mLastX += mSpeed;
+						mRssValues[mRssIndex] = rss - SensorManager.STANDARD_GRAVITY;
+						float vve = 0;
+						for (int i = 0; i < mRssCount; i++) {
+							vve += mRssValues[i];
+						}
+						vve = (vve * VveWindow) / mRssCount;
+						vve = mYOffset * (3.0f/2) + vve * mScale[1];
+						paint.setColor(mColors[1]);
+						canvas.drawLine(mLastX, mLastValues[1], newX, vve,
+								paint);
+						mLastValues[1] = vve;
+						paint.setColor(0xFF000000);
+						canvas.drawText(Long.toString(mRssIndex), 2, mYOffset * (3.0f/2), paint);
+						// Increment graph position
+						mLastX += mSpeed;
+					} else if (event.type == Sensor.TYPE_ORIENTATION) {
+						// Calculate orientation
+						float deltaX = mSpeed;
+						float newX = mLastX + deltaX;
+						float ori = mYOffset * 3 + (90 - Math.abs(event.values[1])) * mScale[2];
+						paint.setColor(mColors[2]);
+						canvas.drawLine(mLastX, mLastValues[2], newX, ori,
+								paint);
+						mLastValues[2] = ori;
 					}
 					invalidate();
 				}

@@ -42,13 +42,21 @@ public class FallDetection extends Activity {
 		private int mColors[] = new int[3 * 2];
 		private float mLastX;
 		private final float RssTreshold = 2.8f;
+		long RssTime = 0;
 		private float mRssValues[] = new float[256];
 		private int mRssCount = 0;
 		private int mRssIndex = 0;
-		private long time = 0;
+		private long RssStartTime = 0;
 		private final float VveWindow = 0.6f;
 		private final float VveTreshold = -0.7f;
+		long VveTime = 0;
+		private final int OriOffset = 1000;
+		private final int OriWindow = 2000;
+		private long OriStartTime = 0;
 		private final float OriTreshold = 60;
+		private final float OriConstraint = 0.75f;
+		private float OriValues[] = new float[256];
+		private int ori_index = 0;
 		private float mYOffset;
 		private float mXOffset;
 		private float mMaxX;
@@ -154,6 +162,7 @@ public class FallDetection extends Activity {
 				if (mBitmap != null) {
 					final Canvas canvas = mCanvas;
 					final Paint paint = mPaint;
+					Date date = new Date();
 					if (event.type == Sensor.TYPE_ACCELEROMETER) {
 						float deltaX = mSpeed;
 						float newX = mLastX + deltaX;
@@ -162,6 +171,7 @@ public class FallDetection extends Activity {
 													  Math.pow(event.values[1], 2) + 
 													  Math.pow(event.values[2], 2));
 						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY) {
+							RssTime = date.getTime();
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("v", newX - 3, mYOffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
 						}
@@ -171,11 +181,10 @@ public class FallDetection extends Activity {
 								paint);
 						mLastValues[0] = draw_rss;
 						// Calculate Vve numeric integral over RSS
-						Date date = new Date();
-						if (time == 0){
-							time = date.getTime();
+						if (RssStartTime == 0){
+							RssStartTime = date.getTime();
 							mRssCount++;
-						} else if (date.getTime() - time <= VveWindow * 1000 && mRssCount < mRssValues.length) {
+						} else if (date.getTime() - RssStartTime <= VveWindow * 1000 && mRssCount < mRssValues.length) {
 							mRssIndex = mRssCount++;	
 						} else {
 							mRssIndex = ++mRssIndex % mRssCount;							
@@ -187,6 +196,7 @@ public class FallDetection extends Activity {
 						}
 						vve = (vve * VveWindow) / mRssCount;
 						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY) {
+							VveTime = date.getTime();
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mYOffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1] - 10, paint);
 						}
@@ -206,6 +216,24 @@ public class FallDetection extends Activity {
 						canvas.drawLine(mLastX, mLastValues[2], newX, ori,
 								paint);
 						mLastValues[2] = ori;
+						long wait_interval = (RssTime != 0 ? date.getTime() - RssTime : (VveTime != 0 ? date.getTime() - VveTime : 0));
+						if (wait_interval <= OriOffset){
+							if (OriStartTime == 0)
+								OriStartTime = date.getTime();
+							else if (date.getTime() - OriStartTime < OriWindow){
+								OriValues[ori_index++] = ori;
+							} else {
+								int count = 0;
+								for (int i = 0; i < ori_index; i++) {
+									if (OriValues[i] > OriTreshold)
+										count++;
+								}
+								if (count / ori_index >= OriConstraint){
+									paint.setColor(0xFF0000FF);
+									canvas.drawText("v", newX - 3, mYOffset * 3 + 90 * mScale[2] + 2, paint);
+								}
+							}
+						}
 					}
 					invalidate();
 				}

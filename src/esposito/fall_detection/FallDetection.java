@@ -76,7 +76,7 @@ public class FallDetection extends Activity {
 			mCanvas.setBitmap(mBitmap);
 			mCanvas.drawColor(0xFFFFFFFF);
 			mYOffset = h / 3.0f;
-			mXOffset = 15;
+			mXOffset = 17;
 			mScale[0] = (float) -(mYOffset * (1.0f / Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3)));
 			mScale[1] = (float) -(mYOffset * (1.0f / ((Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3) - SensorManager.STANDARD_GRAVITY) * VveWindow)));
 			mScale[2] = -(mYOffset * (1.0f / 90));
@@ -107,25 +107,31 @@ public class FallDetection extends Activity {
 						final float maxx = mMaxX;
 						paint.setColor(0xFFAAAAAA);
 						cavas.drawColor(0xFFFFFFFF);
+						// Fal Impact graph
+						cavas.drawText("Fall Impact", mXOffset, 25, paint);
 						cavas.drawLine(mXOffset, yoffset, maxx, yoffset, paint);
-						cavas.drawLine(mXOffset, yoffset, mXOffset, yoffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
-						cavas.drawText("0", 5, yoffset, paint);
-						cavas.drawText("2", 5, yoffset + 2 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
-						cavas.drawText("4", 5, yoffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						cavas.drawLine(mXOffset, yoffset, mXOffset, 28, paint);
+						cavas.drawText("0", 7, yoffset, paint);
+						cavas.drawText("2", 7, yoffset + 2 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						cavas.drawText("4", 7, yoffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						// Vertical Velocity graph
+						cavas.drawText("Vertical Velocity", mXOffset, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1] - 15, paint);
 						cavas.drawLine(mXOffset, yoffset * (3.0f/2), maxx, yoffset * (3.0f/2),
 								paint);
-						cavas.drawLine(mXOffset, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], mXOffset, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1],
+						cavas.drawLine(mXOffset, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], mXOffset, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1] - 12,
 								paint);
-						cavas.drawText("-1", 2, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], paint);
-						cavas.drawText("0", 5, yoffset * (3.0f/2), paint);
-						cavas.drawText("1", 5, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1], paint);
+						cavas.drawText("-1", 4, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], paint);
+						cavas.drawText("0", 7, yoffset * (3.0f/2), paint);
+						cavas.drawText("1", 7, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1], paint);
+						// Posture graph
+						cavas.drawText("Posture", mXOffset, yoffset * 3 + 90 * mScale[2] - 18, paint);
 						cavas.drawLine(mXOffset, yoffset * 3, maxx, yoffset * 3,
 								paint);
-						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset * 3 + 90 * mScale[2],
+						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset * 3 + 90 * mScale[2] - 15,
 								paint);
 						cavas.drawText("0", 7, yoffset * 3, paint);
-						cavas.drawText("45", 0, yoffset * 3 + 45 * mScale[2], paint);
-						cavas.drawText("90", 0, yoffset * 3 + 90 * mScale[2], paint);
+						cavas.drawText("45", 2, yoffset * 3 + 45 * mScale[2], paint);
+						cavas.drawText("90", 2, yoffset * 3 + 90 * mScale[2], paint);
 						paint.setColor(0xFFFF0000);
 						float ytresholdRss = yoffset + RssTreshold * SensorManager.STANDARD_GRAVITY * mScale[0];
 						cavas.drawLine(mXOffset, ytresholdRss, maxx, ytresholdRss, paint);

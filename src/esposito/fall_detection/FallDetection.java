@@ -47,6 +47,7 @@ public class FallDetection extends Activity {
 		private long time = 0;
 		private final float VveWindow = 0.6f;
 		private float mYOffset;
+		private float mXOffset;
 		private float mMaxX;
 		private float mSpeed = 1.0f;
 		private float mWidth;
@@ -72,6 +73,7 @@ public class FallDetection extends Activity {
 			mCanvas.setBitmap(mBitmap);
 			mCanvas.drawColor(0xFFFFFFFF);
 			mYOffset = h / 3.0f;
+			mXOffset = 15;
 			mScale[0] = (float) -(mYOffset * (1.0f / Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3)));
 			mScale[1] = (float) -(mYOffset * (1.0f / ((Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3) - SensorManager.STANDARD_GRAVITY) * VveWindow)));
 			mScale[2] = -(mYOffset * (1.0f / 90));
@@ -96,25 +98,39 @@ public class FallDetection extends Activity {
 					final int inner = 0xFFff7010;
 
 					if (mLastX >= mMaxX) {
-						mLastX = 0;
+						mLastX = mXOffset;
 						final Canvas cavas = mCanvas;
 						final float yoffset = mYOffset;
 						final float maxx = mMaxX;
 						paint.setColor(0xFFAAAAAA);
 						cavas.drawColor(0xFFFFFFFF);
-						cavas.drawLine(0, yoffset, maxx, yoffset, paint);
-						cavas.drawLine(0, yoffset * (3.0f/2), maxx, yoffset * (3.0f/2),
+						cavas.drawLine(mXOffset, yoffset, maxx, yoffset, paint);
+						cavas.drawLine(mXOffset, yoffset, mXOffset, yoffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						cavas.drawText("0", 5, yoffset, paint);
+						cavas.drawText("2", 5, yoffset + 2 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						cavas.drawText("4", 5, yoffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						cavas.drawLine(mXOffset, yoffset * (3.0f/2), maxx, yoffset * (3.0f/2),
 								paint);
-						cavas.drawLine(0, yoffset * 3, maxx, yoffset * 3,
+						cavas.drawLine(mXOffset, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], mXOffset, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1],
 								paint);
+						cavas.drawText("-1", 2, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], paint);
+						cavas.drawText("0", 5, yoffset * (3.0f/2), paint);
+						cavas.drawText("1", 5, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1], paint);
+						cavas.drawLine(mXOffset, yoffset * 3, maxx, yoffset * 3,
+								paint);
+						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset * 3 + 90 * mScale[2],
+								paint);
+						cavas.drawText("0", 7, yoffset * 3, paint);
+						cavas.drawText("45", 0, yoffset * 3 + 45 * mScale[2], paint);
+						cavas.drawText("90", 0, yoffset * 3 + 90 * mScale[2], paint);
 						paint.setColor(0xFFFF0000);
 						float ytresholdRss = yoffset + 2.8f * SensorManager.STANDARD_GRAVITY * mScale[0];
-						cavas.drawLine(0, ytresholdRss, maxx, ytresholdRss, paint);
+						cavas.drawLine(mXOffset, ytresholdRss, maxx, ytresholdRss, paint);
 						float ytresholdVve = yoffset * (3.0f/2) - 0.7f * SensorManager.STANDARD_GRAVITY * mScale[1];
-						cavas.drawLine(0, ytresholdVve, maxx, ytresholdVve,
+						cavas.drawLine(mXOffset, ytresholdVve, maxx, ytresholdVve,
 								paint);
 						float ytresholdOri = yoffset * 3 + 60 * mScale[2];
-						cavas.drawLine(0, ytresholdOri, maxx, ytresholdOri,
+						cavas.drawLine(mXOffset, ytresholdOri, maxx, ytresholdOri,
 								paint);
 					}
 					canvas.drawBitmap(mBitmap, 0, 0, null);
@@ -136,11 +152,11 @@ public class FallDetection extends Activity {
 						float rss = (float) Math.sqrt(Math.pow(event.values[0], 2) + 
 													  Math.pow(event.values[1], 2) + 
 													  Math.pow(event.values[2], 2));
-						rss = mYOffset + rss * mScale[0];
+						float draw_rss = mYOffset + rss * mScale[0];
 						paint.setColor(mColors[0]);
-						canvas.drawLine(mLastX, mLastValues[0], newX, rss,
+						canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
 								paint);
-						mLastValues[0] = rss;
+						mLastValues[0] = draw_rss;
 						// Calculate Vve numeric integral over RSS
 						Date date = new Date();
 						if (time == 0){
@@ -162,8 +178,6 @@ public class FallDetection extends Activity {
 						canvas.drawLine(mLastX, mLastValues[1], newX, vve,
 								paint);
 						mLastValues[1] = vve;
-						paint.setColor(0xFF000000);
-						canvas.drawText(Long.toString(mRssIndex), 2, mYOffset * (3.0f/2), paint);
 						// Increment graph position
 						mLastX += mSpeed;
 					} else if (event.type == Sensor.TYPE_ORIENTATION) {

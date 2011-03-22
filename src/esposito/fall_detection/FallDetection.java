@@ -85,8 +85,10 @@ public class FallDetection extends Activity {
 			mCanvas.drawColor(0xFFFFFFFF);
 			mYOffset = h / 3.0f;
 			mXOffset = 17;
-			mScale[0] = (float) -(mYOffset * (1.0f / Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3)));
-			mScale[1] = (float) -(mYOffset * (1.0f / ((Math.sqrt(Math.pow(SensorManager.STANDARD_GRAVITY * 4, 2) * 3) - SensorManager.STANDARD_GRAVITY) * VveWindow)));
+			mScale[0] = (float) -(mYOffset * (1.0f / Math.sqrt(Math.pow(
+					SensorManager.STANDARD_GRAVITY * 4, 2) * 3)));
+			mScale[1] = (float) -(mYOffset * (1.0f / ((Math.sqrt(Math.pow(
+					SensorManager.STANDARD_GRAVITY * 4, 2) * 3) - SensorManager.STANDARD_GRAVITY) * VveWindow)));
 			mScale[2] = -(mYOffset * (1.0f / 90));
 			mWidth = w;
 			mHeight = h;
@@ -120,35 +122,55 @@ public class FallDetection extends Activity {
 						cavas.drawLine(mXOffset, yoffset, maxx, yoffset, paint);
 						cavas.drawLine(mXOffset, yoffset, mXOffset, 28, paint);
 						cavas.drawText("0", 7, yoffset, paint);
-						cavas.drawText("2", 7, yoffset + 2 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
-						cavas.drawText("4", 7, yoffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+						cavas.drawText("2", 7, yoffset + 2
+								* SensorManager.STANDARD_GRAVITY * mScale[0],
+								paint);
+						cavas.drawText("4", 7, yoffset + 4
+								* SensorManager.STANDARD_GRAVITY * mScale[0],
+								paint);
 						// Vertical Velocity graph
-						cavas.drawText("Vertical Velocity", mXOffset, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1] - 15, paint);
-						cavas.drawLine(mXOffset, yoffset * (3.0f/2), maxx, yoffset * (3.0f/2),
+						cavas.drawText("Vertical Velocity", mXOffset, yoffset
+								* (3.0f / 2) + SensorManager.STANDARD_GRAVITY
+								* mScale[1] - 15, paint);
+						cavas.drawLine(mXOffset, yoffset * (3.0f / 2), maxx,
+								yoffset * (3.0f / 2), paint);
+						cavas.drawLine(mXOffset, yoffset * (3.0f / 2)
+								- SensorManager.STANDARD_GRAVITY * mScale[1],
+								mXOffset, yoffset * (3.0f / 2)
+										+ SensorManager.STANDARD_GRAVITY
+										* mScale[1] - 12, paint);
+						cavas.drawText("-1", 4, yoffset * (3.0f / 2)
+								- SensorManager.STANDARD_GRAVITY * mScale[1],
 								paint);
-						cavas.drawLine(mXOffset, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], mXOffset, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1] - 12,
+						cavas.drawText("0", 7, yoffset * (3.0f / 2), paint);
+						cavas.drawText("1", 7, yoffset * (3.0f / 2)
+								+ SensorManager.STANDARD_GRAVITY * mScale[1],
 								paint);
-						cavas.drawText("-1", 4, yoffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1], paint);
-						cavas.drawText("0", 7, yoffset * (3.0f/2), paint);
-						cavas.drawText("1", 7, yoffset * (3.0f/2) + SensorManager.STANDARD_GRAVITY * mScale[1], paint);
 						// Posture graph
-						cavas.drawText("Posture", mXOffset, yoffset * 3 + 90 * mScale[2] - 18, paint);
-						cavas.drawLine(mXOffset, yoffset * 3, maxx, yoffset * 3,
-								paint);
-						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset * 3 + 90 * mScale[2] - 15,
-								paint);
+						cavas.drawText("Posture", mXOffset, yoffset * 3 + 90
+								* mScale[2] - 18, paint);
+						cavas.drawLine(mXOffset, yoffset * 3, maxx,
+								yoffset * 3, paint);
+						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset
+								* 3 + 90 * mScale[2] - 15, paint);
 						cavas.drawText("0", 7, yoffset * 3, paint);
-						cavas.drawText("45", 2, yoffset * 3 + 45 * mScale[2], paint);
-						cavas.drawText("90", 2, yoffset * 3 + 90 * mScale[2], paint);
+						cavas.drawText("45", 2, yoffset * 3 + 45 * mScale[2],
+								paint);
+						cavas.drawText("90", 2, yoffset * 3 + 90 * mScale[2],
+								paint);
 						paint.setColor(0xFFFF0000);
-						float ytresholdRss = yoffset + RssTreshold * SensorManager.STANDARD_GRAVITY * mScale[0];
-						cavas.drawLine(mXOffset, ytresholdRss, maxx, ytresholdRss, paint);
-						float ytresholdVve = yoffset * (3.0f/2) + VveTreshold * SensorManager.STANDARD_GRAVITY * mScale[1];
-						cavas.drawLine(mXOffset, ytresholdVve, maxx, ytresholdVve,
-								paint);
-						float ytresholdOri = yoffset * 3 + OriTreshold * mScale[2];
-						cavas.drawLine(mXOffset, ytresholdOri, maxx, ytresholdOri,
-								paint);
+						float ytresholdRss = yoffset + RssTreshold
+								* SensorManager.STANDARD_GRAVITY * mScale[0];
+						cavas.drawLine(mXOffset, ytresholdRss, maxx,
+								ytresholdRss, paint);
+						float ytresholdVve = yoffset * (3.0f / 2) + VveTreshold
+								* SensorManager.STANDARD_GRAVITY * mScale[1];
+						cavas.drawLine(mXOffset, ytresholdVve, maxx,
+								ytresholdVve, paint);
+						float ytresholdOri = yoffset * 3 + OriTreshold
+								* mScale[2];
+						cavas.drawLine(mXOffset, ytresholdOri, maxx,
+								ytresholdOri, paint);
 					}
 					canvas.drawBitmap(mBitmap, 0, 0, null);
 				}
@@ -167,13 +189,17 @@ public class FallDetection extends Activity {
 						float deltaX = mSpeed;
 						float newX = mLastX + deltaX;
 						// Calculalte RSS
-						float rss = (float) Math.sqrt(Math.pow(event.values[0], 2) + 
-													  Math.pow(event.values[1], 2) + 
-													  Math.pow(event.values[2], 2));
-						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY) {
-							RssTime = date.getTime();
+						float rss = (float) Math.sqrt(Math.pow(event.values[0],
+								2)
+								+ Math.pow(event.values[1], 2)
+								+ Math.pow(event.values[2], 2));
+						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY && RssTime == 0) {
+							if (VveTime == 0)
+								RssTime = date.getTime();
 							paint.setColor(0xFF0000FF);
-							canvas.drawText("v", newX - 3, mYOffset + 4 * SensorManager.STANDARD_GRAVITY * mScale[0], paint);
+							canvas.drawText("v", newX - 3, mYOffset + 4
+									* SensorManager.STANDARD_GRAVITY
+									* mScale[0], paint);
 						}
 						float draw_rss = mYOffset + rss * mScale[0];
 						paint.setColor(mColors[0]);
@@ -181,26 +207,31 @@ public class FallDetection extends Activity {
 								paint);
 						mLastValues[0] = draw_rss;
 						// Calculate Vve numeric integral over RSS
-						if (RssStartTime == 0){
+						if (RssStartTime == 0) {
 							RssStartTime = date.getTime();
 							mRssCount++;
-						} else if (date.getTime() - RssStartTime <= VveWindow * 1000 && mRssCount < mRssValues.length) {
-							mRssIndex = mRssCount++;	
+						} else if (date.getTime() - RssStartTime <= VveWindow * 1000
+								&& mRssCount < mRssValues.length) {
+							mRssIndex = mRssCount++;
 						} else {
-							mRssIndex = ++mRssIndex % mRssCount;							
+							mRssIndex = ++mRssIndex % mRssCount;
 						}
-						mRssValues[mRssIndex] = rss - SensorManager.STANDARD_GRAVITY;
+						mRssValues[mRssIndex] = rss
+								- SensorManager.STANDARD_GRAVITY;
 						float vve = 0;
 						for (int i = 0; i < mRssCount; i++) {
 							vve += mRssValues[i];
 						}
 						vve = (vve * VveWindow) / mRssCount;
-						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY) {
+						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY && VveTime == 0) {
 							VveTime = date.getTime();
 							paint.setColor(0xFF0000FF);
-							canvas.drawText("^", newX - 3, mYOffset * (3.0f/2) - SensorManager.STANDARD_GRAVITY * mScale[1] - 10, paint);
+							canvas.drawText("^", newX - 3, mYOffset
+									* (3.0f / 2)
+									- SensorManager.STANDARD_GRAVITY
+									* mScale[1] - 10, paint);
 						}
-						vve = mYOffset * (3.0f/2) + vve * mScale[1];
+						vve = mYOffset * (3.0f / 2) + vve * mScale[1];
 						paint.setColor(mColors[1]);
 						canvas.drawLine(mLastX, mLastValues[1], newX, vve,
 								paint);
@@ -211,27 +242,39 @@ public class FallDetection extends Activity {
 						// Calculate orientation
 						float deltaX = mSpeed;
 						float newX = mLastX + deltaX;
-						float ori = mYOffset * 3 + (90 - Math.abs(event.values[1])) * mScale[2];
+						float ori = (90 - Math.abs(event.values[1]));
+						float draw_ori = mYOffset * 3 + ori * mScale[2];
 						paint.setColor(mColors[2]);
-						canvas.drawLine(mLastX, mLastValues[2], newX, ori,
+						canvas.drawLine(mLastX, mLastValues[2], newX, draw_ori,
 								paint);
-						mLastValues[2] = ori;
-						long wait_interval = (RssTime != 0 ? date.getTime() - RssTime : (VveTime != 0 ? date.getTime() - VveTime : 0));
-						if (wait_interval <= OriOffset){
+						mLastValues[2] = draw_ori;
+						// Calculate Position feature
+						long wait_interval = (RssTime != 0 ? date.getTime()
+								- RssTime : (VveTime != 0 ? date.getTime()
+								- VveTime : 0));
+						if (wait_interval >= OriOffset) {
 							if (OriStartTime == 0)
 								OriStartTime = date.getTime();
-							else if (date.getTime() - OriStartTime < OriWindow){
+							else if (date.getTime() - OriStartTime < OriWindow) {
 								OriValues[ori_index++] = ori;
+								canvas.drawLine(mLastX, mYOffset * 3
+										+ 90 * mScale[2] - 1, newX, mYOffset * 3
+										+ 90 * mScale[2] - 1,
+										paint);
 							} else {
 								int count = 0;
 								for (int i = 0; i < ori_index; i++) {
 									if (OriValues[i] > OriTreshold)
 										count++;
 								}
-								if (count / ori_index >= OriConstraint){
+								if (count / ori_index >= OriConstraint) {
+									// A fall has been detected => Time to take action!!!
 									paint.setColor(0xFF0000FF);
-									canvas.drawText("v", newX - 3, mYOffset * 3 + 90 * mScale[2] + 2, paint);
+									canvas.drawText("v", newX - 4, mYOffset * 3
+											+ 90 * mScale[2] - 2, paint);
 								}
+								// Reset variables for next fall
+								OriStartTime = VveTime = RssTime = ori_index = 0;
 							}
 						}
 					}
@@ -264,10 +307,12 @@ public class FallDetection extends Activity {
 		mSensorManager.connectSimulator();
 
 		// get a handle on the location manager
-//		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-//
-//		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
-//				0, new LocationUpdateHandler());
+		// locationManager = (LocationManager)
+		// getSystemService(Context.LOCATION_SERVICE);
+		//
+		// locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+		// 0,
+		// 0, new LocationUpdateHandler());
 	}
 
 	public class LocationUpdateHandler implements LocationListener {

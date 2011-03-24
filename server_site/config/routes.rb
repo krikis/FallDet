@@ -1,15 +1,13 @@
 ServerSite::Application.routes.draw do
-  
-  get "falls/index"
-
-  get "falls/show"
-
-  get "falls/create"
 
   root :controller => :falls, :action => :index
   
   resources :falls,
-            :only => [:index, :show, :create]
+            :only => [:index, :create] do 
+    collection do
+      get :refresh
+    end
+  end
             
   # The priority is based upon order of creation:
   # first created -> highest priority.

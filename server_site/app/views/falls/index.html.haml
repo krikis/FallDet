@@ -57,7 +57,17 @@
 = render :partial => "empty" if @falls.blank?
 -# functions for clickable_row
 :javascript
+
+  function refresh_falls() {  
+    $.get('falls/refresh', function(data) {
+      if (data > 0)
+        window.location = ""
+    });    
+  }
+  
   $(document).ready(function(){
+    $("li.new").effect("highlight", {color:"#4183C4"}, 2000)
+    
     $("li.clickable").hover(
       function(){
         $("li." + $(this).attr("id")).addClass("hover")
@@ -66,4 +76,6 @@
         $("li." + $(this).attr("id")).removeClass("hover")
       }
     )
+    
+    setInterval('refresh_falls()', 2000)
   })

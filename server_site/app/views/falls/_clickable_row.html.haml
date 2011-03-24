@@ -2,9 +2,12 @@
 - element = clickable_row[:element]
 - content = clickable_row[:content]
 - html = render(:partial => "text", :object => (content || raw("&nbsp;")))
-- path = falls_path
+- path = ""
 - id = element.id
-%li.row.clickable{:class => (clickable_row[:color] + " #{id}"), :title => content, :id => id}
+- class_name = clickable_row[:color] + " #{id}"
+- if element.created_at > 10.seconds.ago
+  - class_name += " new"
+%li.row.clickable{:class => class_name, :title => content, :id => id}
   - link_class = "clickable_row"
   = link_to html, |
             path,

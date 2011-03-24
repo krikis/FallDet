@@ -1,9 +1,11 @@
 class FallsController < ApplicationController
   def index
     @falls = Fall.find(:all, :limit => 20, :order => "created_at desc")
+    session[:freshness] = @falls.first.created_at
   end
-
-  def show
+  
+  def refresh
+    render :text => Fall.count(:conditions => ["created_at > ?", session[:freshness].to_s(:db)]).to_s
   end
 
   def create

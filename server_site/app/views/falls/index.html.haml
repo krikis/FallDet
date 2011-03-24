@@ -53,6 +53,7 @@
                    :object => {:element => element, |
                                :content => element.details[:longitude],
                                :color => cycle("odd last", "even last")}
+    %p &nbsp;
 = render :partial => "empty" if @falls.blank?
 -# functions for clickable_row
 :javascript

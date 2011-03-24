@@ -1,6 +1,6 @@
 class FallsController < ApplicationController
   def index
-    @falls = Fall.find(:all, :limit => 50, :order => "created_at desc")
+    @falls = Fall.find(:all, :limit => 20, :order => "created_at desc")
   end
 
   def show

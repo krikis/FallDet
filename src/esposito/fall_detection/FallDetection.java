@@ -39,11 +39,8 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
@@ -56,18 +53,16 @@ public class FallDetection extends Activity {
 	ProgressDialog progressDialog;
 	private SensorManagerSimulator mSensorManager;
 	private GraphView mGraphView;
-	private static final String MAP_API_KEY = "06cz479V1NDWE1O7nSLXCSi0AbVf-cnqKmTYdWg";
 	private LocationManager locationManager;
 	private LocationUpdateHandler locationUpdateHandler;
 	long RssTime = 0;
 	float RssVal = 0;
 	long VveTime = 0;
 	float VveVal = 0;
-	boolean fall_handling = false;
 	boolean fall_detected = false;
+	boolean handling_fall = false;
 	public double lat;
 	public double lon;
-	int count = 0;
 
 	private class GraphView extends View implements SensorEventListener {
 		private Bitmap mBitmap;
@@ -142,9 +137,6 @@ public class FallDetection extends Activity {
 			synchronized (this) {
 				if (mBitmap != null) {
 					final Paint paint = mPaint;
-					final Path path = mPath;
-					final int outer = 0xFFC0C0C0;
-					final int inner = 0xFFff7010;
 
 					if (mLastX >= mMaxX) {
 						mLastX = mXOffset;
@@ -210,122 +202,122 @@ public class FallDetection extends Activity {
 					}
 					canvas.drawBitmap(mBitmap, 0, 0, null);
 				}
-				if (fall_detected) {
-					fall_detected = false; // Make sure fall is handled only once
-					fall_handler();
-				}
 			}
 		}
 
 		public void onSensorChanged(SensorEvent event) {
-			// Log.d(TAG, "sensor: " + sensor + ", x: " + values[0] + ", y: " +
-			// values[1] + ", z: " + values[2]);
 			synchronized (this) {
 				if (mBitmap != null) {
-					final Canvas canvas = mCanvas;
-					final Paint paint = mPaint;
-					Date date = new Date();
-					if (event.type == Sensor.TYPE_ACCELEROMETER) {
-						float deltaX = mSpeed;
-						float newX = mLastX + deltaX;
-						// Calculalte RSS
-						float rss = (float) Math.sqrt(Math.pow(event.values[0],
-								2)
-								+ Math.pow(event.values[1], 2)
-								+ Math.pow(event.values[2], 2));
-						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
-								&& RssTime == 0) {
-							if (VveTime == 0) {
-								RssVal = rss;
-								RssTime = date.getTime();
+					if (fall_detected) {
+						if (!handling_fall) {
+							handling_fall = true;
+							handle_fall();
+						}
+					} else {
+						final Canvas canvas = mCanvas;
+						final Paint paint = mPaint;
+						Date date = new Date();
+						if (event.type == Sensor.TYPE_ACCELEROMETER) {
+							float deltaX = mSpeed;
+							float newX = mLastX + deltaX;
+							// Calculalte RSS
+							float rss = (float) Math.sqrt(Math.pow(event.values[0],
+									2)
+									+ Math.pow(event.values[1], 2)
+									+ Math.pow(event.values[2], 2));
+							if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
+									&& RssTime == 0) {
+								if (VveTime == 0) {
+									RssVal = rss;
+									RssTime = date.getTime();
+								}
+								paint.setColor(0xFF0000FF);
+								canvas.drawText("v", newX - 3, mYOffset + 4
+										* SensorManager.STANDARD_GRAVITY
+										* mScale[0], paint);
 							}
-							paint.setColor(0xFF0000FF);
-							canvas.drawText("v", newX - 3, mYOffset + 4
-									* SensorManager.STANDARD_GRAVITY
-									* mScale[0], paint);
-						}
-						float draw_rss = mYOffset + rss * mScale[0];
-						paint.setColor(mColors[0]);
-						canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
-								paint);
-						mLastValues[0] = draw_rss;
-						// Calculate Vve numeric integral over RSS
-						if (RssStartTime == 0) {
-							RssStartTime = date.getTime();
-							mRssCount++;
-						} else if (date.getTime() - RssStartTime <= VveWindow * 1000
-								&& mRssCount < mRssValues.length) {
-							mRssIndex = mRssCount++;
-						} else {
-							mRssIndex = ++mRssIndex % mRssCount;
-						}
-						mRssValues[mRssIndex] = rss
-								- SensorManager.STANDARD_GRAVITY;
-						float vve = 0;
-						for (int i = 0; i < mRssCount; i++) {
-							vve += mRssValues[i];
-						}
-						vve = (vve * VveWindow) / mRssCount;
-						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
-								&& VveTime == 0) {
-							VveVal = vve;
-							VveTime = date.getTime();
-							paint.setColor(0xFF0000FF);
-							canvas.drawText("^", newX - 3, mYOffset
-									* (3.0f / 2)
-									- SensorManager.STANDARD_GRAVITY
-									* mScale[1] - 10, paint);
-						}
-						vve = mYOffset * (3.0f / 2) + vve * mScale[1];
-						paint.setColor(mColors[1]);
-						canvas.drawLine(mLastX, mLastValues[1], newX, vve,
-								paint);
-						mLastValues[1] = vve;
-						// Increment graph position
-						mLastX += mSpeed;
-					} else if (event.type == Sensor.TYPE_ORIENTATION) {
-						// Calculate orientation
-						float deltaX = mSpeed;
-						float newX = mLastX + deltaX;
-						float ori = (90 - Math.abs(event.values[1]));
-						float draw_ori = mYOffset * 3 + ori * mScale[2];
-						paint.setColor(mColors[2]);
-						canvas.drawLine(mLastX, mLastValues[2], newX, draw_ori,
-								paint);
-						mLastValues[2] = draw_ori;
-						// Calculate Position feature
-						long wait_interval = (RssTime != 0 ? date.getTime()
-								- RssTime : (VveTime != 0 ? date.getTime()
-								- VveTime : 0));
-						if (wait_interval >= OriOffset) {
-							if (OriStartTime == 0)
-								OriStartTime = date.getTime();
-							else if (date.getTime() - OriStartTime < OriWindow) {
-								OriValues[ori_index++] = ori;
-								canvas.drawLine(mLastX, mYOffset * 3 + 90
-										* mScale[2] - 2, newX, mYOffset * 3
-										+ 90 * mScale[2] - 2, paint);
+							float draw_rss = mYOffset + rss * mScale[0];
+							paint.setColor(mColors[0]);
+							canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
+									paint);
+							mLastValues[0] = draw_rss;
+							// Calculate Vve numeric integral over RSS
+							if (RssStartTime == 0) {
+								RssStartTime = date.getTime();
+								mRssCount++;
+							} else if (date.getTime() - RssStartTime <= VveWindow * 1000
+									&& mRssCount < mRssValues.length) {
+								mRssIndex = mRssCount++;
 							} else {
-								int count = 0;
-								for (int i = 0; i < ori_index; i++) {
-									if (OriValues[i] > OriTreshold)
-										count++;
-								}
-								if (count / ori_index >= OriConstraint) {
-									// A fall has been detected => Time to take
-									// action!!!
-									paint.setColor(0xFF0000FF);
-									canvas.drawText("v", newX - 4, mYOffset * 3
+								mRssIndex = ++mRssIndex % mRssCount;
+							}
+							mRssValues[mRssIndex] = rss
+									- SensorManager.STANDARD_GRAVITY;
+							float vve = 0;
+							for (int i = 0; i < mRssCount; i++) {
+								vve += mRssValues[i];
+							}
+							vve = (vve * VveWindow) / mRssCount;
+							if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
+									&& VveTime == 0) {
+								VveVal = vve;
+								VveTime = date.getTime();
+								paint.setColor(0xFF0000FF);
+								canvas.drawText("^", newX - 3, mYOffset
+										* (3.0f / 2)
+										- SensorManager.STANDARD_GRAVITY
+										* mScale[1] - 10, paint);
+							}
+							vve = mYOffset * (3.0f / 2) + vve * mScale[1];
+							paint.setColor(mColors[1]);
+							canvas.drawLine(mLastX, mLastValues[1], newX, vve,
+									paint);
+							mLastValues[1] = vve;
+							// Increment graph position
+							mLastX += mSpeed;
+						} else if (event.type == Sensor.TYPE_ORIENTATION) {
+							// Calculate orientation
+							float deltaX = mSpeed;
+							float newX = mLastX + deltaX;
+							float ori = (90 - Math.abs(event.values[1]));
+							float draw_ori = mYOffset * 3 + ori * mScale[2];
+							paint.setColor(mColors[2]);
+							canvas.drawLine(mLastX, mLastValues[2], newX, draw_ori,
+									paint);
+							mLastValues[2] = draw_ori;
+							// Calculate Position feature
+							long wait_interval = (RssTime != 0 ? date.getTime()
+									- RssTime : (VveTime != 0 ? date.getTime()
+									- VveTime : 0));
+							if (wait_interval >= OriOffset) {
+								if (OriStartTime == 0)
+									OriStartTime = date.getTime();
+								else if (date.getTime() - OriStartTime < OriWindow) {
+									OriValues[ori_index++] = ori;
+									canvas.drawLine(mLastX, mYOffset * 3 + 90
+											* mScale[2] - 2, newX, mYOffset * 3
 											+ 90 * mScale[2] - 2, paint);
-									fall_detected = true;
+								} else {
+									int count = 0;
+									for (int i = 0; i < ori_index; i++) {
+										if (OriValues[i] > OriTreshold)
+											count++;
+									}
+									if (count / ori_index >= OriConstraint) {
+										// A fall has been detected => Time to take
+										// action!!!
+										paint.setColor(0xFF0000FF);
+										canvas.drawText("v", newX - 4, mYOffset * 3
+												+ 90 * mScale[2] - 2, paint);
+										fall_detected = true;
+									}
+									// Reset variables for next fall
+									OriStartTime = ori_index = 0;
 								}
-								// Reset variables for next fall
-								OriStartTime = ori_index = 0;
 							}
 						}
-					}
-					if (!fall_handling)
 						invalidate();
+					}
 				}
 			}
 		}
@@ -339,10 +331,7 @@ public class FallDetection extends Activity {
 		case PROGRESS_DIALOG:
 			progressDialog = new ProgressDialog(FallDetection.this);
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			progressDialog
-					.setMessage("Location: " +
-								Double.toString(lat) + " | " + Double.toString(lon) + "\n" +
-							    "Click cancel to prevent a fall notification from being sent.");
+			progressDialog.setMessage("Sending fall notification...");
 			progressDialog.setTitle("A fall was Detected!");
 			progressDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel",
 					buttonListener);
@@ -368,11 +357,13 @@ public class FallDetection extends Activity {
 	final Handler handler = new Handler() {
 		public void handleMessage(Message msg) {
 			int total = msg.arg1;
-			progressDialog.setProgress(total);
-			if (total >= 10) {
-				postDetectedFall(); // report the fall
+			if (total < 11) {
+				progressDialog.setProgress(total);
+			} else if (total == 11) {
+				progressDialog.setProgress(0);
 				dismissDialog(PROGRESS_DIALOG);
 				progressThread.setState(ProgressThread.STATE_DONE);
+				postDetectedFall(); // report the fall				
 			}
 		}
 	};
@@ -403,7 +394,6 @@ public class FallDetection extends Activity {
 				mHandler.sendMessage(msg);
 				total++;
 			}
-			total = 0;
 		}
 
 		/*
@@ -418,15 +408,14 @@ public class FallDetection extends Activity {
 	private OnClickListener buttonListener = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			// cancel the fall handling
-			fall_handling = false;
 			progressThread.setState(ProgressThread.STATE_DONE);
+			// reset recorded values
+			reset_fall_values();
 		}
 	};
 
 	// Displays a dialog that a fall has been detected.
-	public void fall_handler() {		
-		fall_handling = true; // stop graph updates while handling fall
+	public void handle_fall() {		
 		// Start requesting location
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
 				0, new LocationUpdateHandler());
@@ -437,7 +426,7 @@ public class FallDetection extends Activity {
 //		location.setLongitude(6.535999);
 //		location.setTime((new Date()).getTime());
 //		locationUpdateHandler.onLocationChanged(location);
-		count++;
+		
 		showDialog(PROGRESS_DIALOG);
 	}
 
@@ -454,7 +443,6 @@ public class FallDetection extends Activity {
 	    nameValuePairs.add(new BasicNameValuePair("vve", (VveVal == 0 ? "" : Float.toString(VveVal))));
 	    nameValuePairs.add(new BasicNameValuePair("lat", Double.toString(lat)));
 	    nameValuePairs.add(new BasicNameValuePair("lon", Double.toString(lon)));
-	    nameValuePairs.add(new BasicNameValuePair("count", Integer.toString(count)));
 	    try {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 		} catch (UnsupportedEncodingException e) {
@@ -486,9 +474,15 @@ public class FallDetection extends Activity {
 		} else {
 			// notify failure
 		}
-		RssVal = VveVal = VveTime = RssTime = 0; // reset recorded values
-		// restart fall detection
-		fall_handling = false;
+		// reset recorded values
+		reset_fall_values();
+	}
+	
+	public void reset_fall_values() {
+		// reset recorded values
+		RssVal = VveVal = VveTime = RssTime = 0;
+		fall_detected = false;
+		handling_fall = false;
 	}
 	
 	/**

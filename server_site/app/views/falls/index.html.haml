@@ -11,7 +11,7 @@
         - @falls.each do |element|
           = render :partial => "clickable_row", |
                    :object => {:element => element, |
-                               :content => "#{time_ago_in_words(element.details[:datetime])} ago",
+                               :content => "#{time_ago_in_words(element.details[:datetime], true)} ago",
                                :color => cycle("odd", "even")}
     %li.column.dashboard
       %ul

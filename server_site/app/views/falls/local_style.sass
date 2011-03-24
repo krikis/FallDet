@@ -1,0 +1,82 @@
+!column_grey = #EEE
+!border_grey = #DDD
+!column_hover = #98C2EC
+
+body
+  line-height: 1.2em
+
+
+div.empty
+  padding: 3em
+
+div.columns
+  clear: both
+
+  li.dashboard
+    width: 20%
+
+  li.column
+    float: left
+    overflow: auto
+    overflow-x: hidden
+
+  li.row.last
+    border-right: 1px solid !border_grey
+
+  li.row.even
+    background-color: !column_grey
+
+  li.row.selected
+    background-color: !column_hover
+
+  li.row.hover
+    background-color: !column_hover
+
+  li.row
+    height: 2.6em
+    overflow: hidden
+    border-bottom: 1px solid !border_grey
+    border-left: 1px solid !border_grey
+
+    div.row
+      width: 100%
+      display: block
+      padding: .8em
+
+    a.clickable_row
+      display: block
+      width: 100%
+      padding: .8em
+      color: black
+      font-weight: normal
+      text-decoration: none
+
+    a.icon  
+      padding: 4px
+      padding-left: 1em
+      padding-top: 5px
+      height: 32px
+
+    span
+      white-space: nowrap
+      margin: 0px
+
+    input
+      line-height: inherit
+
+  li.header
+    background-color: #000
+    color: #FFF
+    display: block
+    height: 1.3em
+    padding: .3em 1em .2em 1em
+    text-align: left
+    text-decoration: none
+
+/* fixes for ie 6.0 */
+
+* html div.columns li.dashboard
+  width: 19%
+
+* html span
+  vertical-align: top

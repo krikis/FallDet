@@ -1,0 +1,11 @@
+- type = clickable_row[:type]
+- element = clickable_row[:element]
+- content = clickable_row[:content]
+- html = render(:partial => "text", :object => (content || raw("&nbsp;")))
+- path = falls_path
+- id = element.id
+%li.row.clickable{:class => (clickable_row[:color] + " #{id}"), :title => content, :id => id}
+  - link_class = "clickable_row"
+  = link_to html, |
+            path,
+            :class => link_class

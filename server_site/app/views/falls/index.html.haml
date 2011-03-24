@@ -1,0 +1,68 @@
+- add_local_style 'falls/local_style'
+- # list of falls
+%div.columns
+  %ul
+    %li.column.dashboard
+      %ul
+        - header = I18n.t("falls.date")
+        %li.header{:title => header}= header
+        - reset_cycle("default")        
+        -# :content => I18n.l(element.details[:datetime].to_date, :format => :long),
+        - @falls.each do |element|
+          = render :partial => "clickable_row", |
+                   :object => {:element => element, |
+                               :content => "#{time_ago_in_words(element.details[:datetime])} ago",
+                               :color => cycle("odd", "even")}
+    %li.column.dashboard
+      %ul
+        - header = I18n.t("falls.impact")
+        %li.header{:title => header}= header
+        - reset_cycle("default")
+        - @falls.each do |element|
+          = render :partial => "clickable_row", |
+                   :object => {:element => element, |
+                               :content => element.details[:root_sum_squares],
+                               :color => cycle("odd", "even")}
+    %li.column.dashboard
+      %ul
+        - header = I18n.t("falls.vertical")
+        %li.header{:title => header}= header
+        - reset_cycle("default")
+        - @falls.each do |element|
+          = render :partial => "clickable_row", |
+                   :object => {:element => element, |
+                               :content => element.details[:vertical_velocity],
+                               :color => cycle("odd", "even")}
+    %li.column.dashboard
+      %ul
+        - header = I18n.t("falls.lat")
+        %li.header{:title => header}= header
+        - reset_cycle("default")
+        - @falls.each do |element|
+          = render :partial => "clickable_row", |
+                   :object => {:element => element, |
+                               :content => element.details[:latitude],
+                               :color => cycle("odd", "even")}
+    %li.column.dashboard.last
+      %ul
+        - header = I18n.t("falls.long")
+        %li.header{:title => header}= header
+        - reset_cycle("default")
+        - @falls.each do |element|
+          = render :partial => "clickable_row", |
+                   :object => {:element => element, |
+                               :content => element.details[:longitude],
+                               :color => cycle("odd last", "even last")}
+= render :partial => "empty" if @falls.blank?
+-# functions for clickable_row
+:javascript
+  $(document).ready(function(){
+    $("li.clickable").hover(
+      function(){
+        $("li." + $(this).attr("id")).addClass("hover")
+      },
+      function(){
+        $("li." + $(this).attr("id")).removeClass("hover")
+      }
+    )
+  })

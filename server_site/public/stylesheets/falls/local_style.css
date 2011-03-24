@@ -1,0 +1,63 @@
+body {
+  line-height: 1.2em; }
+
+div.empty {
+  padding: 3em; }
+
+div.columns {
+  clear: both; }
+  div.columns li.dashboard {
+    width: 20%; }
+  div.columns li.column {
+    float: left;
+    overflow: auto;
+    overflow-x: hidden; }
+  div.columns li.row.last {
+    border-right: 1px solid #dddddd; }
+  div.columns li.row.even {
+    background-color: #eeeeee; }
+  div.columns li.row.selected {
+    background-color: #98c2ec; }
+  div.columns li.row.hover {
+    background-color: #98c2ec; }
+  div.columns li.row {
+    height: 2.6em;
+    overflow: hidden;
+    border-bottom: 1px solid #dddddd;
+    border-left: 1px solid #dddddd; }
+    div.columns li.row div.row {
+      width: 100%;
+      display: block;
+      padding: 0.8em; }
+    div.columns li.row a.clickable_row {
+      display: block;
+      width: 100%;
+      padding: 0.8em;
+      color: black;
+      font-weight: normal;
+      text-decoration: none; }
+    div.columns li.row a.icon {
+      padding: 4px;
+      padding-left: 1em;
+      padding-top: 5px;
+      height: 32px; }
+    div.columns li.row span {
+      white-space: nowrap;
+      margin: 0px; }
+    div.columns li.row input {
+      line-height: inherit; }
+  div.columns li.header {
+    background-color: black;
+    color: white;
+    display: block;
+    height: 1.3em;
+    padding: 0.3em 1em 0.2em 1em;
+    text-align: left;
+    text-decoration: none; }
+
+/* fixes for ie 6.0 */
+* html div.columns li.dashboard {
+  width: 19%; }
+
+* html span {
+  vertical-align: top; }

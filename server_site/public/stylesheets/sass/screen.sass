@@ -1,0 +1,50 @@
+!column_grey = #EEE
+!border_grey = #DDD
+!column_hover = #98C2EC
+!blue = #4183C4
+
+div#crumbs
+  clear: both
+  width: 100%
+  height: 30px
+  margin-bottom: 1em
+
+  ul
+    height: 30px
+
+  li.crumb
+    display: block
+    float: left
+    height: 30px
+    overflow: hidden
+
+    a.separator
+      display: block
+      float: left
+      font-size: 1.5em
+      padding: .3em
+      padding-left: 0px
+
+    a.crumb
+      display: block
+      float: left
+      text-decoration: none
+      font-weight: normal
+      font: inherit
+      font-size: 1.3em
+      color: black
+      padding: .3em
+      padding-left: 0px
+
+    a.crumb.not_last
+      color: !blue
+
+      &:hover, &:active
+        text-decoration: underline
+
+    a.crumb.not_last.uber
+      font-weight: bolder
+
+div.empty
+  clear: both
+  padding: 3em

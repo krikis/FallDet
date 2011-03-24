@@ -1,0 +1,38 @@
+div#crumbs {
+  clear: both;
+  width: 100%;
+  height: 30px;
+  margin-bottom: 1em; }
+  div#crumbs ul {
+    height: 30px; }
+  div#crumbs li.crumb {
+    display: block;
+    float: left;
+    height: 30px;
+    overflow: hidden; }
+    div#crumbs li.crumb a.separator {
+      display: block;
+      float: left;
+      font-size: 1.5em;
+      padding: 0.3em;
+      padding-left: 0px; }
+    div#crumbs li.crumb a.crumb {
+      display: block;
+      float: left;
+      text-decoration: none;
+      font-weight: normal;
+      font: inherit;
+      font-size: 1.3em;
+      color: black;
+      padding: 0.3em;
+      padding-left: 0px; }
+    div#crumbs li.crumb a.crumb.not_last {
+      color: #4183c4; }
+      div#crumbs li.crumb a.crumb.not_last:hover, div#crumbs li.crumb a.crumb.not_last:active {
+        text-decoration: underline; }
+    div#crumbs li.crumb a.crumb.not_last.uber {
+      font-weight: bolder; }
+
+div.empty {
+  clear: both;
+  padding: 3em; }

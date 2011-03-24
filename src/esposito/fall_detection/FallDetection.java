@@ -222,11 +222,12 @@ public class FallDetection extends Activity {
 							float deltaX = mSpeed;
 							float newX = mLastX + deltaX;
 							// Calculalte RSS
-							float rss = (float) Math.sqrt(Math.pow(event.values[0],
-									2)
+							float rss = (float) Math.sqrt(Math.pow(
+									event.values[0], 2)
 									+ Math.pow(event.values[1], 2)
 									+ Math.pow(event.values[2], 2));
-							if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
+							if (rss > RssTreshold
+									* SensorManager.STANDARD_GRAVITY
 									&& RssTime == 0) {
 								if (VveTime == 0) {
 									RssVal = rss;
@@ -239,8 +240,8 @@ public class FallDetection extends Activity {
 							}
 							float draw_rss = mYOffset + rss * mScale[0];
 							paint.setColor(mColors[0]);
-							canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
-									paint);
+							canvas.drawLine(mLastX, mLastValues[0], newX,
+									draw_rss, paint);
 							mLastValues[0] = draw_rss;
 							// Calculate Vve numeric integral over RSS
 							if (RssStartTime == 0) {
@@ -259,7 +260,8 @@ public class FallDetection extends Activity {
 								vve += mRssValues[i];
 							}
 							vve = (vve * VveWindow) / mRssCount;
-							if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
+							if (vve < VveTreshold
+									* SensorManager.STANDARD_GRAVITY
 									&& VveTime == 0) {
 								VveVal = vve;
 								VveTime = date.getTime();
@@ -283,8 +285,8 @@ public class FallDetection extends Activity {
 							float ori = (90 - Math.abs(event.values[1]));
 							float draw_ori = mYOffset * 3 + ori * mScale[2];
 							paint.setColor(mColors[2]);
-							canvas.drawLine(mLastX, mLastValues[2], newX, draw_ori,
-									paint);
+							canvas.drawLine(mLastX, mLastValues[2], newX,
+									draw_ori, paint);
 							mLastValues[2] = draw_ori;
 							// Calculate Position feature
 							long wait_interval = (RssTime != 0 ? date.getTime()
@@ -305,11 +307,12 @@ public class FallDetection extends Activity {
 											count++;
 									}
 									if (count / ori_index >= OriConstraint) {
-										// A fall has been detected => Time to take
+										// A fall has been detected => Time to
+										// take
 										// action!!!
 										paint.setColor(0xFF0000FF);
-										canvas.drawText("v", newX - 4, mYOffset * 3
-												+ 90 * mScale[2] - 2, paint);
+										canvas.drawText("v", newX - 4, mYOffset
+												* 3 + 90 * mScale[2] - 2, paint);
 										fall_detected = true;
 									}
 									// Reset variables for next fall
@@ -364,7 +367,7 @@ public class FallDetection extends Activity {
 				progressDialog.setProgress(0);
 				dismissDialog(PROGRESS_DIALOG);
 				progressThread.setState(ProgressThread.STATE_DONE);
-				postDetectedFall(); // report the fall				
+				postDetectedFall(); // report the fall
 			}
 		}
 	};
@@ -416,18 +419,18 @@ public class FallDetection extends Activity {
 	};
 
 	// Displays a dialog that a fall has been detected.
-	public void handle_fall() {		
+	public void handle_fall() {
 		// Start requesting location
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
 				0, new LocationUpdateHandler());
-		
+
 		// Uncomment to create a location update for demonstration purposes
-//		Location location = new Location(LocationManager.GPS_PROVIDER);
-//		location.setLatitude(53.240407);
-//		location.setLongitude(6.535999);
-//		location.setTime((new Date()).getTime());
-//		locationUpdateHandler.onLocationChanged(location);
-		
+		// Location location = new Location(LocationManager.GPS_PROVIDER);
+		// location.setLatitude(53.240407);
+		// location.setLongitude(6.535999);
+		// location.setTime((new Date()).getTime());
+		// locationUpdateHandler.onLocationChanged(location);
+
 		showDialog(PROGRESS_DIALOG);
 	}
 
@@ -435,21 +438,25 @@ public class FallDetection extends Activity {
 	private void postDetectedFall() {
 		// Making an HTTP post request and reading out the response
 		HttpClient httpclient = new DefaultHttpClient();
-		httpclient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
-		HttpPost httppost = new HttpPost(
-				"http://195.240.74.93:3000/falls");	
+		httpclient.getParams().setParameter(
+				CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
+		HttpPost httppost = new HttpPost("http://195.240.74.93:3000/falls");
 		// set post data
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-	    nameValuePairs.add(new BasicNameValuePair("datetime", (VveTime != 0 ? Long.toString(VveTime) : (RssTime != 0 ? Long.toString(RssTime) : ""))));
-	    nameValuePairs.add(new BasicNameValuePair("rss", (RssVal == 0 ? "" : Float.toString(RssVal))));
-	    nameValuePairs.add(new BasicNameValuePair("vve", (VveVal == 0 ? "" : Float.toString(VveVal))));
-	    nameValuePairs.add(new BasicNameValuePair("lat", Double.toString(lat)));
-	    nameValuePairs.add(new BasicNameValuePair("lon", Double.toString(lon)));
-	    try {
+		nameValuePairs.add(new BasicNameValuePair("datetime",
+				(VveTime != 0 ? Long.toString(VveTime) : (RssTime != 0 ? Long
+						.toString(RssTime) : ""))));
+		nameValuePairs.add(new BasicNameValuePair("rss", (RssVal == 0 ? ""
+				: Float.toString(RssVal))));
+		nameValuePairs.add(new BasicNameValuePair("vve", (VveVal == 0 ? ""
+				: Float.toString(VveVal))));
+		nameValuePairs.add(new BasicNameValuePair("lat", Double.toString(lat)));
+		nameValuePairs.add(new BasicNameValuePair("lon", Double.toString(lon)));
+		try {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 		} catch (UnsupportedEncodingException e) {
 			// notify failure
-		}	
+		}
 		HttpResponse response;
 		String response_content = "";
 		try {
@@ -479,14 +486,14 @@ public class FallDetection extends Activity {
 		// reset recorded values
 		reset_fall_values();
 	}
-	
+
 	public void reset_fall_values() {
 		// reset recorded values
 		RssVal = VveVal = VveTime = RssTime = 0;
 		fall_detected = false;
 		handling_fall = false;
 	}
-	
+
 	/**
 	 * Initialization of the Activity after it is first created. Must at least
 	 * call {@link android.app.Activity#setContentView setContentView()} to
@@ -505,7 +512,7 @@ public class FallDetection extends Activity {
 		mSensorManager = SensorManagerSimulator.getSystemService(this,
 				SENSOR_SERVICE);
 		mSensorManager.connectSimulator();
-		
+
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);

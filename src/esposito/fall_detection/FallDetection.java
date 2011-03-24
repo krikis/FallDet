@@ -1,6 +1,13 @@
 package esposito.fall_detection;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -26,6 +33,17 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
@@ -40,10 +58,16 @@ public class FallDetection extends Activity {
 	private GraphView mGraphView;
 	private static final String MAP_API_KEY = "06cz479V1NDWE1O7nSLXCSi0AbVf-cnqKmTYdWg";
 	private LocationManager locationManager;
+	private LocationUpdateHandler locationUpdateHandler;
+	long RssTime = 0;
+	float RssVal = 0;
+	long VveTime = 0;
+	float VveVal = 0;
 	boolean fall_handling = false;
 	boolean fall_detected = false;
 	public double lat;
 	public double lon;
+	int count = 0;
 
 	private class GraphView extends View implements SensorEventListener {
 		private Bitmap mBitmap;
@@ -56,14 +80,12 @@ public class FallDetection extends Activity {
 		private int mColors[] = new int[3 * 2];
 		private float mLastX;
 		private final float RssTreshold = 2.8f;
-		long RssTime = 0;
 		private float mRssValues[] = new float[256];
 		private int mRssCount = 0;
 		private int mRssIndex = 0;
 		private long RssStartTime = 0;
 		private final float VveWindow = 0.6f;
 		private final float VveTreshold = -0.7f;
-		long VveTime = 0;
 		private final int OriOffset = 1000;
 		private final int OriWindow = 2000;
 		private long OriStartTime = 0;
@@ -188,8 +210,10 @@ public class FallDetection extends Activity {
 					}
 					canvas.drawBitmap(mBitmap, 0, 0, null);
 				}
-				if (fall_detected)
+				if (fall_detected) {
+					fall_detected = false; // Make sure fall is handled only once
 					fall_handler();
+				}
 			}
 		}
 
@@ -211,8 +235,10 @@ public class FallDetection extends Activity {
 								+ Math.pow(event.values[2], 2));
 						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
 								&& RssTime == 0) {
-							if (VveTime == 0)
+							if (VveTime == 0) {
+								RssVal = rss;
 								RssTime = date.getTime();
+							}
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("v", newX - 3, mYOffset + 4
 									* SensorManager.STANDARD_GRAVITY
@@ -242,6 +268,7 @@ public class FallDetection extends Activity {
 						vve = (vve * VveWindow) / mRssCount;
 						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
 								&& VveTime == 0) {
+							VveVal = vve;
 							VveTime = date.getTime();
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mYOffset
@@ -293,7 +320,7 @@ public class FallDetection extends Activity {
 									fall_detected = true;
 								}
 								// Reset variables for next fall
-								OriStartTime = VveTime = RssTime = ori_index = 0;
+								OriStartTime = ori_index = 0;
 							}
 						}
 					}
@@ -315,7 +342,7 @@ public class FallDetection extends Activity {
 			progressDialog
 					.setMessage("Location: " +
 								Double.toString(lat) + " | " + Double.toString(lon) + "\n" +
-							    "Click cancel to prevent a notification from being sent.");
+							    "Click cancel to prevent a fall notification from being sent.");
 			progressDialog.setTitle("A fall was Detected!");
 			progressDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Cancel",
 					buttonListener);
@@ -343,8 +370,7 @@ public class FallDetection extends Activity {
 			int total = msg.arg1;
 			progressDialog.setProgress(total);
 			if (total >= 10) {
-				// provisory stopper => extend with real message sending
-				fall_handling = fall_detected = false;
+				postDetectedFall(); // report the fall
 				dismissDialog(PROGRESS_DIALOG);
 				progressThread.setState(ProgressThread.STATE_DONE);
 			}
@@ -392,17 +418,16 @@ public class FallDetection extends Activity {
 	private OnClickListener buttonListener = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			fall_handling = fall_detected = false;
+			// cancel the fall handling
+			fall_handling = false;
 			progressThread.setState(ProgressThread.STATE_DONE);
 		}
 	};
 
 	// Displays a dialog that a fall has been detected.
-	public void fall_handler() {
-		// get a handle on the location manager
-		LocationUpdateHandler locationUpdateHandler = new LocationUpdateHandler();
-		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
+	public void fall_handler() {		
+		fall_handling = true; // stop graph updates while handling fall
+		// Start requesting location
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
 				0, new LocationUpdateHandler());
 		
@@ -412,11 +437,60 @@ public class FallDetection extends Activity {
 //		location.setLongitude(6.535999);
 //		location.setTime((new Date()).getTime());
 //		locationUpdateHandler.onLocationChanged(location);
-		
-		fall_handling = true; // stop graph updates while handling fall
+		count++;
 		showDialog(PROGRESS_DIALOG);
 	}
 
+	// Post fall details to a REST web service
+	private void postDetectedFall() {
+		// Making an HTTP post request and reading out the response
+		HttpClient httpclient = new DefaultHttpClient();
+		HttpPost httppost = new HttpPost(
+				"http://195.240.74.93:3000/falls");	
+		// set post data
+		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+	    nameValuePairs.add(new BasicNameValuePair("datetime", (VveTime != 0 ? Long.toString(VveTime) : (RssTime != 0 ? Long.toString(RssTime) : ""))));
+	    nameValuePairs.add(new BasicNameValuePair("rss", (RssVal == 0 ? "" : Float.toString(RssVal))));
+	    nameValuePairs.add(new BasicNameValuePair("vve", (VveVal == 0 ? "" : Float.toString(VveVal))));
+	    nameValuePairs.add(new BasicNameValuePair("lat", Double.toString(lat)));
+	    nameValuePairs.add(new BasicNameValuePair("lon", Double.toString(lon)));
+	    nameValuePairs.add(new BasicNameValuePair("count", Integer.toString(count)));
+	    try {
+			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+		} catch (UnsupportedEncodingException e) {
+			// notify failure
+		}	
+		HttpResponse response;
+		String response_content = "";
+		try {
+			response = httpclient.execute(httppost);
+			if (response.getStatusLine().getStatusCode() == 200) {
+				HttpEntity entity = response.getEntity();
+				if (entity != null) {
+					InputStream instream = entity.getContent();
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(instream));
+					StringBuilder builder = new StringBuilder();
+					String line = null;
+					while ((line = reader.readLine()) != null) {
+						builder.append(line + "\n");
+					}
+					response_content = builder.toString();
+				}
+			}
+		} catch (IOException e) {
+			// notify failure
+		}
+		if (response_content == "fall_created") {
+			// notify success
+		} else {
+			// notify failure
+		}
+		RssVal = VveVal = VveTime = RssTime = 0; // reset recorded values
+		// restart fall detection
+		fall_handling = false;
+	}
+	
 	/**
 	 * Initialization of the Activity after it is first created. Must at least
 	 * call {@link android.app.Activity#setContentView setContentView()} to
@@ -435,6 +509,10 @@ public class FallDetection extends Activity {
 		mSensorManager = SensorManagerSimulator.getSystemService(this,
 				SENSOR_SERVICE);
 		mSensorManager.connectSimulator();
+		
+		// initialize location manager
+		locationUpdateHandler = new LocationUpdateHandler();
+		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 	}
 
 	public class LocationUpdateHandler implements LocationListener {

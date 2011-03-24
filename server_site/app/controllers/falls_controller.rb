@@ -16,5 +16,9 @@ class FallsController < ApplicationController
                                     :longitude => params[:lon]}
     render :text => "fall_created"
   end
+  
+  def show
+    @fall = Fall.find_by_id params[:id]
+  end
 
 end

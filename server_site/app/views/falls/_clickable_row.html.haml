@@ -2,8 +2,8 @@
 - element = clickable_row[:element]
 - content = clickable_row[:content]
 - html = render(:partial => "text", :object => (content || raw("&nbsp;")))
-- path = ""
 - id = element.id
+- path = fall_path :id => id
 - class_name = clickable_row[:color] + " #{id}"
 - if element.created_at > 10.seconds.ago
   - class_name += " new"

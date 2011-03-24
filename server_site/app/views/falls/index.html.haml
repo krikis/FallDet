@@ -15,16 +15,6 @@
                                :color => cycle("odd", "even")}
     %li.column.dashboard
       %ul
-        - header = I18n.t("falls.impact")
-        %li.header{:title => header}= header
-        - reset_cycle("default")
-        - @falls.each do |element|
-          = render :partial => "clickable_row", |
-                   :object => {:element => element, |
-                               :content => element.details[:root_sum_squares],
-                               :color => cycle("odd", "even")}
-    %li.column.dashboard
-      %ul
         - header = I18n.t("falls.vertical")
         %li.header{:title => header}= header
         - reset_cycle("default")
@@ -32,6 +22,16 @@
           = render :partial => "clickable_row", |
                    :object => {:element => element, |
                                :content => element.details[:vertical_velocity],
+                               :color => cycle("odd", "even")}
+    %li.column.dashboard
+      %ul
+        - header = I18n.t("falls.impact")
+        %li.header{:title => header}= header
+        - reset_cycle("default")
+        - @falls.each do |element|
+          = render :partial => "clickable_row", |
+                   :object => {:element => element, |
+                               :content => element.details[:root_sum_squares],
                                :color => cycle("odd", "even")}
     %li.column.dashboard
       %ul
@@ -59,9 +59,9 @@
 :javascript
 
   function refresh_falls() {  
-    $.get('falls/refresh', function(data) {
+    $.get('/falls/refresh', function(data) {
       if (data > 0)
-        window.location = ""
+        window.location = "/"
     });    
   }
   

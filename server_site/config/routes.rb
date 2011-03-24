@@ -3,7 +3,7 @@ ServerSite::Application.routes.draw do
   root :controller => :falls, :action => :index
   
   resources :falls,
-            :only => [:index, :create] do 
+            :only => [:index, :show, :create] do 
     collection do
       get :refresh
     end

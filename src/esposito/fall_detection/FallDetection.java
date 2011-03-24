@@ -41,6 +41,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.CoreConnectionPNames;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
@@ -434,6 +435,7 @@ public class FallDetection extends Activity {
 	private void postDetectedFall() {
 		// Making an HTTP post request and reading out the response
 		HttpClient httpclient = new DefaultHttpClient();
+		httpclient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
 		HttpPost httppost = new HttpPost(
 				"http://195.240.74.93:3000/falls");	
 		// set post data
@@ -466,7 +468,7 @@ public class FallDetection extends Activity {
 					response_content = builder.toString();
 				}
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			// notify failure
 		}
 		if (response_content == "fall_created") {

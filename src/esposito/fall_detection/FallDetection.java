@@ -22,9 +22,9 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.util.Log;
 import android.view.View;
-//import android.hardware.Sensor;
-//import android.hardware.SensorEvent;
-//import android.hardware.SensorEventListener;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -42,17 +42,17 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreConnectionPNames;
-import org.openintents.sensorsimulator.hardware.Sensor;
-import org.openintents.sensorsimulator.hardware.SensorEvent;
-import org.openintents.sensorsimulator.hardware.SensorEventListener;
-import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+//import org.openintents.sensorsimulator.hardware.Sensor;
+//import org.openintents.sensorsimulator.hardware.SensorEvent;
+//import org.openintents.sensorsimulator.hardware.SensorEventListener;
+//import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
 public class FallDetection extends Activity {
 
 	static final int PROGRESS_DIALOG = 0;
 	ProgressThread progressThread;
 	ProgressDialog progressDialog;
-	private SensorManagerSimulator mSensorManager;
+	private SensorManager mSensorManager;
 	private GraphView mGraphView;
 	private LocationManager locationManager;
 	private LocationUpdateHandler locationUpdateHandler;
@@ -218,7 +218,7 @@ public class FallDetection extends Activity {
 						final Canvas canvas = mCanvas;
 						final Paint paint = mPaint;
 						Date date = new Date();
-						if (event.type == Sensor.TYPE_ACCELEROMETER) {
+						if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 							float deltaX = mSpeed;
 							float newX = mLastX + deltaX;
 							// Calculalte RSS
@@ -278,7 +278,7 @@ public class FallDetection extends Activity {
 							mLastValues[1] = vve;
 							// Increment graph position
 							mLastX += mSpeed;
-						} else if (event.type == Sensor.TYPE_ORIENTATION) {
+						} else if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
 							// Calculate orientation
 							float deltaX = mSpeed;
 							float newX = mLastX + deltaX;
@@ -507,11 +507,11 @@ public class FallDetection extends Activity {
 		setContentView(mGraphView);
 
 		// real code
-		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// simulation code
-		mSensorManager = SensorManagerSimulator.getSystemService(this,
-				SENSOR_SERVICE);
-		mSensorManager.connectSimulator();
+//		mSensorManager = SensorManagerSimulator.getSystemService(this,
+//				SENSOR_SERVICE);
+//		mSensorManager.connectSimulator();
 
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();

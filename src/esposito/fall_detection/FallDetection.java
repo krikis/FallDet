@@ -20,6 +20,7 @@ import android.location.*;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.content.pm.ActivityInfo;
 import android.util.Log;
 import android.view.View;
 import android.hardware.Sensor;
@@ -516,6 +517,9 @@ public class FallDetection extends Activity {
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		
+		//set the screen in landscape mode
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 	}
 
 	public class LocationUpdateHandler implements LocationListener {

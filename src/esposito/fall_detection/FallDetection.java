@@ -1,11 +1,9 @@
 package esposito.fall_detection;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.security.KeyStore.LoadStoreParameter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -69,6 +67,7 @@ public class FallDetection extends Activity {
 	public double lon;
 	private Object syncObj = new Object();
 	private GpsStatus.Listener gpsListener = null;
+	private boolean hasAcquiredGps = false;
 
 	private class GraphView extends View implements SensorEventListener {
 		private Bitmap mBitmap;
@@ -163,9 +162,10 @@ public class FallDetection extends Activity {
 								* SensorManager.STANDARD_GRAVITY * mScale[0],
 								paint);
 						// Vertical Velocity graph
-						cavas.drawText("Vertical Velocity", mXOffset + 4, yoffset
-								* (3.0f / 2) + SensorManager.STANDARD_GRAVITY
-								* mScale[1], paint);
+						cavas.drawText("Vertical Velocity", mXOffset + 4,
+								yoffset * (3.0f / 2)
+										+ SensorManager.STANDARD_GRAVITY
+										* mScale[1], paint);
 						cavas.drawLine(mXOffset, yoffset * (3.0f / 2), maxx,
 								yoffset * (3.0f / 2), paint);
 						cavas.drawLine(mXOffset, yoffset * (3.0f / 2)
@@ -181,8 +181,8 @@ public class FallDetection extends Activity {
 								+ SensorManager.STANDARD_GRAVITY * mScale[1],
 								paint);
 						// Posture graph
-						cavas.drawText("Posture", mXOffset + 4, yoffset * 3 + 90
-								* mScale[2], paint);
+						cavas.drawText("Posture", mXOffset + 4, yoffset * 3
+								+ 90 * mScale[2], paint);
 						cavas.drawLine(mXOffset, yoffset * 3, maxx,
 								yoffset * 3, paint);
 						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset
@@ -300,16 +300,18 @@ public class FallDetection extends Activity {
 									OriStartTime = date.getTime();
 								else if (date.getTime() - OriStartTime < OriWindow) {
 									OriValues[ori_index++] = ori;
-									canvas.drawLine(mLastXOri, mYOffset * 3 + 90
-											* mScale[2] - 2, newX, mYOffset * 3
-											+ 90 * mScale[2] - 2, paint);
+									canvas.drawLine(mLastXOri, mYOffset * 3
+											+ 90 * mScale[2] - 2, newX,
+											mYOffset * 3 + 90 * mScale[2] - 2,
+											paint);
 								} else {
 									int count = 0;
 									for (int i = 0; i < ori_index; i++) {
 										if (OriValues[i] > OriTreshold)
 											count++;
 									}
-									if (count / ori_index >= OriConstraint) {
+									if (count / ori_index >= OriConstraint
+											&& hasAcquiredGps) {
 										// A fall has been detected => Time to
 										// take
 										// action!!!
@@ -514,20 +516,20 @@ public class FallDetection extends Activity {
 		// real code
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// simulation code
-//		 mSensorManager = SensorManagerSimulator.getSystemService(this,
-//		 SENSOR_SERVICE);
-//		 mSensorManager.connectSimulator();
+		// mSensorManager = SensorManagerSimulator.getSystemService(this,
+		// SENSOR_SERVICE);
+		// mSensorManager.connectSimulator();
 
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		
+
 		// Uncomment to create a location update for demonstration purposes
-//		 Location location = new Location(LocationManager.GPS_PROVIDER);
-//		 location.setLatitude(53.240407);
-//		 location.setLongitude(6.535999);
-//		 location.setTime((new Date()).getTime());
-//		 locationUpdateHandler.onLocationChanged(location);
+		// Location location = new Location(LocationManager.GPS_PROVIDER);
+		// location.setLatitude(53.240407);
+		// location.setLongitude(6.535999);
+		// location.setTime((new Date()).getTime());
+		// locationUpdateHandler.onLocationChanged(location);
 
 		// check whether gps is turned on
 		checkGPS();
@@ -550,6 +552,18 @@ public class FallDetection extends Activity {
 					progD.cancel();
 				}
 			});
+			// button to by pass the gps as he won't find the satellites in a
+			// building and we need to demo it...
+			progD.setButton2("Just go", new DialogInterface.OnClickListener() {
+
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					progD.cancel();
+					locationManager.removeGpsStatusListener(gpsListener);
+					hasAcquiredGps = true;
+				}
+			});
+
 			progD.setCancelable(false);
 
 			// listener to close the dialog when the gps has started
@@ -564,6 +578,7 @@ public class FallDetection extends Activity {
 							if (progD != null) {
 								progD.cancel();
 								propagateEvent = false;
+								hasAcquiredGps = true;
 							}
 						}
 					}

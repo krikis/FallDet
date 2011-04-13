@@ -23,9 +23,9 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.pm.ActivityInfo;
 import android.util.Log;
 import android.view.View;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
+//import android.hardware.Sensor;
+//import android.hardware.SensorEvent;
+//import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -43,17 +43,17 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreConnectionPNames;
-//import org.openintents.sensorsimulator.hardware.Sensor;
-//import org.openintents.sensorsimulator.hardware.SensorEvent;
-//import org.openintents.sensorsimulator.hardware.SensorEventListener;
-//import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+import org.openintents.sensorsimulator.hardware.Sensor;
+import org.openintents.sensorsimulator.hardware.SensorEvent;
+import org.openintents.sensorsimulator.hardware.SensorEventListener;
+import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
 public class FallDetection extends Activity {
 
 	static final int PROGRESS_DIALOG = 0;
 	ProgressThread progressThread;
 	ProgressDialog progressDialog;
-	private SensorManager mSensorManager;
+	private SensorManagerSimulator mSensorManager;
 	private GraphView mGraphView;
 	private LocationManager locationManager;
 	private LocationUpdateHandler locationUpdateHandler;
@@ -223,7 +223,7 @@ public class FallDetection extends Activity {
 						final Canvas canvas = mCanvas;
 						final Paint paint = mPaint;
 						Date date = new Date();
-						if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+						if (event.type == Sensor.TYPE_ACCELEROMETER) {
 							// determine stepsize
 							newX = mLastX + mSpeed;
 							// Calculalte RSS
@@ -283,7 +283,7 @@ public class FallDetection extends Activity {
 							mLastValues[1] = vve;
 							// Increment graph position
 							mLastX = newX;
-						} else if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
+						} else if (event.type == Sensor.TYPE_ORIENTATION) {
 							// Calculate orientation
 							float ori = (90 - Math.abs(event.values[1]));
 							float draw_ori = mYOffset * 3 + ori * mScale[2];
@@ -514,22 +514,22 @@ public class FallDetection extends Activity {
 		setContentView(mGraphView);
 
 		// real code
-		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// simulation code
-		// mSensorManager = SensorManagerSimulator.getSystemService(this,
-		// SENSOR_SERVICE);
-		// mSensorManager.connectSimulator();
+		 mSensorManager = SensorManagerSimulator.getSystemService(this,
+		 SENSOR_SERVICE);
+		 mSensorManager.connectSimulator();
 
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 		// Uncomment to create a location update for demonstration purposes
-		// Location location = new Location(LocationManager.GPS_PROVIDER);
-		// location.setLatitude(53.240407);
-		// location.setLongitude(6.535999);
-		// location.setTime((new Date()).getTime());
-		// locationUpdateHandler.onLocationChanged(location);
+		 Location location = new Location(LocationManager.GPS_PROVIDER);
+		 location.setLatitude(53.24015);
+		 location.setLongitude(6.5365);
+		 location.setTime((new Date()).getTime());
+		 locationUpdateHandler.onLocationChanged(location);
 
 		// check whether gps is turned on
 		checkGPS();
@@ -543,7 +543,7 @@ public class FallDetection extends Activity {
 
 			// create a dialog for waiting the gps to start
 			final ProgressDialog progD = new ProgressDialog(this);
-			progD.setMessage("Activating Gps please wait");
+			progD.setMessage("Activating Gps | Please wait...");
 			progD.setButton("Cancel", new DialogInterface.OnClickListener() {
 
 				@Override

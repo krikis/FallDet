@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.security.KeyStore.LoadStoreParameter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.os.Bundle;
@@ -65,6 +67,8 @@ public class FallDetection extends Activity {
 	boolean handling_fall = false;
 	public double lat;
 	public double lon;
+	private Object syncObj = new Object();
+	private GpsStatus.Listener gpsListener = null;
 
 	private class GraphView extends View implements SensorEventListener {
 		private Bitmap mBitmap;
@@ -75,7 +79,6 @@ public class FallDetection extends Activity {
 		private float mLastValues[] = new float[3];
 		private float mScale[] = new float[3];
 		private int mColors[] = new int[3 * 2];
-		private float mLastX;
 		private final float RssTreshold = 2.8f;
 		private float mRssValues[] = new float[256];
 		private int mRssCount = 0;
@@ -96,6 +99,9 @@ public class FallDetection extends Activity {
 		private float mSpeed = 1.0f;
 		private float mWidth;
 		private float mHeight;
+		private float mLastX;
+		private float newX;
+		private float mLastXOri;
 
 		public GraphView(Context context) {
 			super(context);
@@ -125,11 +131,7 @@ public class FallDetection extends Activity {
 			mScale[2] = -(mYOffset * (1.0f / 90));
 			mWidth = w;
 			mHeight = h;
-			if (mWidth < mHeight) {
-				mMaxX = w;
-			} else {
-				mMaxX = w - 50;
-			}
+			mMaxX = w;
 			mLastX = mMaxX;
 			super.onSizeChanged(w, h, oldw, oldh);
 		}
@@ -140,17 +142,19 @@ public class FallDetection extends Activity {
 				if (mBitmap != null) {
 					final Paint paint = mPaint;
 
-					if (mLastX >= mMaxX) {
+					if (mLastX >= mMaxX || mLastXOri >= mMaxX) {
+						mLastXOri = mXOffset;
 						mLastX = mXOffset;
+						newX = mSpeed;
 						final Canvas cavas = mCanvas;
 						final float yoffset = mYOffset;
 						final float maxx = mMaxX;
 						paint.setColor(0xFFAAAAAA);
 						cavas.drawColor(0xFFFFFFFF);
 						// Fal Impact graph
-						cavas.drawText("Fall Impact", mXOffset, 25, paint);
+						cavas.drawText("Fall Impact", mXOffset + 4, 25, paint);
 						cavas.drawLine(mXOffset, yoffset, maxx, yoffset, paint);
-						cavas.drawLine(mXOffset, yoffset, mXOffset, 28, paint);
+						cavas.drawLine(mXOffset, yoffset, mXOffset, 5, paint);
 						cavas.drawText("0", 7, yoffset, paint);
 						cavas.drawText("2", 7, yoffset + 2
 								* SensorManager.STANDARD_GRAVITY * mScale[0],
@@ -159,9 +163,9 @@ public class FallDetection extends Activity {
 								* SensorManager.STANDARD_GRAVITY * mScale[0],
 								paint);
 						// Vertical Velocity graph
-						cavas.drawText("Vertical Velocity", mXOffset, yoffset
+						cavas.drawText("Vertical Velocity", mXOffset + 4, yoffset
 								* (3.0f / 2) + SensorManager.STANDARD_GRAVITY
-								* mScale[1] - 15, paint);
+								* mScale[1], paint);
 						cavas.drawLine(mXOffset, yoffset * (3.0f / 2), maxx,
 								yoffset * (3.0f / 2), paint);
 						cavas.drawLine(mXOffset, yoffset * (3.0f / 2)
@@ -177,8 +181,8 @@ public class FallDetection extends Activity {
 								+ SensorManager.STANDARD_GRAVITY * mScale[1],
 								paint);
 						// Posture graph
-						cavas.drawText("Posture", mXOffset, yoffset * 3 + 90
-								* mScale[2] - 18, paint);
+						cavas.drawText("Posture", mXOffset + 4, yoffset * 3 + 90
+								* mScale[2], paint);
 						cavas.drawLine(mXOffset, yoffset * 3, maxx,
 								yoffset * 3, paint);
 						cavas.drawLine(mXOffset, yoffset * 3, mXOffset, yoffset
@@ -220,8 +224,8 @@ public class FallDetection extends Activity {
 						final Paint paint = mPaint;
 						Date date = new Date();
 						if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-							float deltaX = mSpeed;
-							float newX = mLastX + deltaX;
+							// determine stepsize
+							newX = mLastX + mSpeed;
 							// Calculalte RSS
 							float rss = (float) Math.sqrt(Math.pow(
 									event.values[0], 2)
@@ -278,15 +282,13 @@ public class FallDetection extends Activity {
 									paint);
 							mLastValues[1] = vve;
 							// Increment graph position
-							mLastX += mSpeed;
+							mLastX = newX;
 						} else if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
 							// Calculate orientation
-							float deltaX = mSpeed;
-							float newX = mLastX + deltaX;
 							float ori = (90 - Math.abs(event.values[1]));
 							float draw_ori = mYOffset * 3 + ori * mScale[2];
 							paint.setColor(mColors[2]);
-							canvas.drawLine(mLastX, mLastValues[2], newX,
+							canvas.drawLine(mLastXOri, mLastValues[2], newX,
 									draw_ori, paint);
 							mLastValues[2] = draw_ori;
 							// Calculate Position feature
@@ -298,7 +300,7 @@ public class FallDetection extends Activity {
 									OriStartTime = date.getTime();
 								else if (date.getTime() - OriStartTime < OriWindow) {
 									OriValues[ori_index++] = ori;
-									canvas.drawLine(mLastX, mYOffset * 3 + 90
+									canvas.drawLine(mLastXOri, mYOffset * 3 + 90
 											* mScale[2] - 2, newX, mYOffset * 3
 											+ 90 * mScale[2] - 2, paint);
 								} else {
@@ -320,6 +322,7 @@ public class FallDetection extends Activity {
 									OriStartTime = ori_index = 0;
 								}
 							}
+							mLastXOri = newX;
 						}
 						invalidate();
 					}
@@ -421,22 +424,21 @@ public class FallDetection extends Activity {
 
 	// Displays a dialog that a fall has been detected.
 	public void handle_fall() {
-		// Start requesting location
-		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,
-				0, new LocationUpdateHandler());
-
-		// Uncomment to create a location update for demonstration purposes
-		// Location location = new Location(LocationManager.GPS_PROVIDER);
-		// location.setLatitude(53.240407);
-		// location.setLongitude(6.535999);
-		// location.setTime((new Date()).getTime());
-		// locationUpdateHandler.onLocationChanged(location);
 
 		showDialog(PROGRESS_DIALOG);
 	}
 
 	// Post fall details to a REST web service
 	private void postDetectedFall() {
+
+		double lat2 = -1;
+		double lon2 = -1;
+
+		synchronized (syncObj) {
+			lat2 = lat;
+			lon2 = lon;
+		}
+
 		// Making an HTTP post request and reading out the response
 		HttpClient httpclient = new DefaultHttpClient();
 		httpclient.getParams().setParameter(
@@ -451,8 +453,10 @@ public class FallDetection extends Activity {
 				: Float.toString(RssVal))));
 		nameValuePairs.add(new BasicNameValuePair("vve", (VveVal == 0 ? ""
 				: Float.toString(VveVal))));
-		nameValuePairs.add(new BasicNameValuePair("lat", Double.toString(lat)));
-		nameValuePairs.add(new BasicNameValuePair("lon", Double.toString(lon)));
+		nameValuePairs
+				.add(new BasicNameValuePair("lat", Double.toString(lat2)));
+		nameValuePairs
+				.add(new BasicNameValuePair("lon", Double.toString(lon2)));
 		try {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 		} catch (UnsupportedEncodingException e) {
@@ -510,23 +514,97 @@ public class FallDetection extends Activity {
 		// real code
 		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// simulation code
-//		mSensorManager = SensorManagerSimulator.getSystemService(this,
-//				SENSOR_SERVICE);
-//		mSensorManager.connectSimulator();
+//		 mSensorManager = SensorManagerSimulator.getSystemService(this,
+//		 SENSOR_SERVICE);
+//		 mSensorManager.connectSimulator();
 
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		
-		//set the screen in landscape mode
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		// Uncomment to create a location update for demonstration purposes
+//		 Location location = new Location(LocationManager.GPS_PROVIDER);
+//		 location.setLatitude(53.240407);
+//		 location.setLongitude(6.535999);
+//		 location.setTime((new Date()).getTime());
+//		 locationUpdateHandler.onLocationChanged(location);
+
+		// check whether gps is turned on
+		checkGPS();
+
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+	}
+
+	protected void checkGPS() {
+		// add listener to the gps status if needed
+		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+
+			// create a dialog for waiting the gps to start
+			final ProgressDialog progD = new ProgressDialog(this);
+			progD.setMessage("Activating Gps please wait");
+			progD.setButton("Cancel", new DialogInterface.OnClickListener() {
+
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					FallDetection.this.finish();
+					progD.cancel();
+				}
+			});
+			progD.setCancelable(false);
+
+			// listener to close the dialog when the gps has started
+			gpsListener = new GpsStatus.Listener() {
+
+				private boolean propagateEvent = true;
+
+				@Override
+				public void onGpsStatusChanged(int event) {
+					if (event == GpsStatus.GPS_EVENT_FIRST_FIX) {
+						if (propagateEvent) {
+							if (progD != null) {
+								progD.cancel();
+								propagateEvent = false;
+							}
+						}
+					}
+				}
+			};
+
+			locationManager.addGpsStatusListener(gpsListener);
+
+			locationManager.requestLocationUpdates(
+					LocationManager.GPS_PROVIDER, 0, 0,
+					this.locationUpdateHandler);
+
+			progD.show();
+
+			// set the screen in landscape mode
+
+		} else {
+			// Alert the user gps is disabled
+			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage("Your GPS seems to be disabled, please enable it");
+			builder.setCancelable(false);
+			builder.setPositiveButton("Yes",
+					new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							FallDetection.this.finish();
+						}
+					});
+			builder.create().show();
+		}
 	}
 
 	public class LocationUpdateHandler implements LocationListener {
 
 		public void onLocationChanged(Location loc) {
-			lat = loc.getLatitude();
-			lon = loc.getLongitude();
+
+			synchronized (syncObj) {
+				lat = loc.getLatitude();
+				lon = loc.getLongitude();
+			}
+
 		}
 
 		public void onProviderDisabled(String provider) {
@@ -544,18 +622,23 @@ public class FallDetection extends Activity {
 		super.onResume();
 		mSensorManager.registerListener(mGraphView,
 				mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-				SensorManager.SENSOR_DELAY_FASTEST);
+				SensorManager.SENSOR_DELAY_UI);
 		mSensorManager.registerListener(mGraphView,
 				mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-				SensorManager.SENSOR_DELAY_FASTEST);
+				SensorManager.SENSOR_DELAY_UI);
 		mSensorManager.registerListener(mGraphView,
 				mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-				SensorManager.SENSOR_DELAY_FASTEST);
+				SensorManager.SENSOR_DELAY_UI);
 	}
 
 	@Override
 	protected void onStop() {
+		if (gpsListener != null) {
+			locationManager.removeGpsStatusListener(gpsListener);
+		}
 		mSensorManager.unregisterListener(mGraphView);
+		locationManager.removeUpdates(this.locationUpdateHandler);
+
 		super.onStop();
 	}
 }

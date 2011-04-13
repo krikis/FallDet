@@ -3,7 +3,7 @@
 - url += "#{@fall.details[:latitude]}+#{@fall.details[:longitude]}"
 - url += "&amp;aq=&amp;sll="
 - url += "#{@fall.details[:latitude]},#{@fall.details[:longitude]}"
-- url += "&amp;ie=UTF8&amp;z=14&amp;ll="
+- url += "&amp;ie=UTF8&amp;z=16&amp;ll="
 - url += "#{@fall.details[:latitude]},#{@fall.details[:longitude]}"
 - url += "&amp;output=embed"
 
@@ -21,7 +21,7 @@
   - link_url += "#{@fall.details[:latitude]}+#{@fall.details[:longitude]}"
   - link_url += "&amp;aq=&amp;sll="
   - link_url += "#{@fall.details[:latitude]},#{@fall.details[:longitude]}"
-  - link_url += "&amp;sspn=0.003255,0.00809&amp;ie=UTF8&amp;z=14&amp;ll="
+  - link_url += "&amp;sspn=0.003255,0.00809&amp;ie=UTF8&amp;z=16&amp;ll="
   - link_url += "#{@fall.details[:latitude]},#{@fall.details[:longitude]}"
   %a{:href => link_url, :style => "color: #0000FF; text-align: left"}View Larger Map
 

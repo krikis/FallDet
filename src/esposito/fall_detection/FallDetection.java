@@ -5,23 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
-import android.app.Activity;
-import android.app.Dialog;
-import android.app.ProgressDialog;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-
-import android.location.*;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.pm.ActivityInfo;
-import android.util.Log;
-import android.hardware.SensorManager;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -32,19 +16,25 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreConnectionPNames;
-import org.openintents.sensorsimulator.hardware.Sensor;
-import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+
+import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.content.pm.ActivityInfo;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 
 public class FallDetection extends Activity {
 
 	static final int PROGRESS_DIALOG = 0;
 	ProgressThread progressThread;
 	ProgressDialog progressDialog;
-	private SensorManagerSimulator mSensorManager;
 	protected GraphView mGraphView;
 	protected FallDetector mFallDetector;
-	private GpsChecker gpsChecker;
-	protected LocationManager locationManager;
 	protected LocationUpdateHandler locationUpdateHandler;
 	protected boolean hasAcquiredGps = false;
 	long RssTime = 0;
@@ -235,58 +225,24 @@ public class FallDetection extends Activity {
 		setContentView(mGraphView);
 		// Create the fall detector
 		mFallDetector = new FallDetector(this);
-		
-		// real code
-		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-		// simulation code
-		mSensorManager = SensorManagerSimulator.getSystemService(this,
-				SENSOR_SERVICE);
-		mSensorManager.connectSimulator();
-
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler(this);
-		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-		// Uncomment to create a location update for demonstration purposes
-		Location location = new Location(LocationManager.GPS_PROVIDER);
-		location.setLatitude(53.24015);
-		location.setLongitude(6.5365);
-		location.setTime((new Date()).getTime());
-		locationUpdateHandler.onLocationChanged(location);
-
 		// check whether gps is turned on
-		gpsChecker = new GpsChecker(this);
-		gpsChecker.checkGPS();
-
+		locationUpdateHandler.checkGPS();
+		// set app orientation to landscape
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 	}
-
-
-
-
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mSensorManager.registerListener(mFallDetector,
-				mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-				SensorManager.SENSOR_DELAY_UI);
-		mSensorManager.registerListener(mFallDetector,
-				mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
-				SensorManager.SENSOR_DELAY_UI);
-		mSensorManager.registerListener(mFallDetector,
-				mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-				SensorManager.SENSOR_DELAY_UI);
+		mFallDetector.registerListeners();
 	}
 
 	@Override
 	protected void onStop() {
-		if (gpsChecker.gpsListener != null) {
-			locationManager.removeGpsStatusListener(gpsChecker.gpsListener);
-		}
-		mSensorManager.unregisterListener(mFallDetector);
-		locationManager.removeUpdates(this.locationUpdateHandler);
-
+		mFallDetector.unregisterListeners();
+		locationUpdateHandler.unregisterListeners();
 		super.onStop();
 	}
 }

@@ -1,59 +1,20 @@
 package esposito.fall_detection;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.ProgressDialog;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-
-import android.location.*;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.content.pm.ActivityInfo;
-import android.util.Log;
-import android.view.View;
-//import android.hardware.Sensor;
-//import android.hardware.SensorEvent;
-//import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.RectF;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.CoreConnectionPNames;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
 import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
+//import android.hardware.Sensor;
+//import android.hardware.SensorEvent;
+//import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 
-
-//IST-MUSIC libraries
-import org.istmusic.mw.context.model.api.*;
-
-public class FallDetector implements SensorEventListener {	
+public class FallDetector implements SensorEventListener {
 
 	private float mLastValues[] = new float[3];
 	protected final float RssTreshold = 2.8f;
@@ -74,12 +35,36 @@ public class FallDetector implements SensorEventListener {
 	protected float mLastX;
 	protected float newX;
 	private GraphView mGraphView;
-	
+
+	private SensorManagerSimulator mSensorManager;
+
 	private FallDetection activity;
-	
-	public FallDetector (FallDetection activity) {
-		this.activity = activity;	
+
+	public FallDetector(FallDetection activity) {
+		this.activity = activity;
 		this.mGraphView = activity.mGraphView;
+		// Code for accessing the real sensors
+		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		// Sensor simulation code
+		mSensorManager = SensorManagerSimulator.getSystemService(activity,
+				activity.SENSOR_SERVICE);
+		mSensorManager.connectSimulator();
+	}
+
+	public void registerListeners() {
+		mSensorManager.registerListener(this,
+				mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+				SensorManager.SENSOR_DELAY_UI);
+		mSensorManager.registerListener(this,
+				mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+				SensorManager.SENSOR_DELAY_UI);
+		mSensorManager.registerListener(this,
+				mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+				SensorManager.SENSOR_DELAY_UI);
+	}
+
+	public void unregisterListeners() {
+		mSensorManager.unregisterListener(this);
 	}
 
 	@Override
@@ -99,26 +84,26 @@ public class FallDetector implements SensorEventListener {
 						// determine stepsize
 						newX = mLastX + mGraphView.mSpeed;
 						// Calculalte RSS
-						float rss = (float) Math.sqrt(Math.pow(
-								event.values[0], 2)
+						float rss = (float) Math.sqrt(Math.pow(event.values[0],
+								2)
 								+ Math.pow(event.values[1], 2)
 								+ Math.pow(event.values[2], 2));
-						if (rss > RssTreshold
-								* SensorManager.STANDARD_GRAVITY
+						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
 								&& activity.RssTime == 0) {
 							if (activity.VveTime == 0) {
 								activity.RssVal = rss;
 								activity.RssTime = date.getTime();
 							}
 							paint.setColor(0xFF0000FF);
-							canvas.drawText("v", newX - 3, mGraphView.mYOffset + 4
-									* SensorManager.STANDARD_GRAVITY
+							canvas.drawText("v", newX - 3, mGraphView.mYOffset
+									+ 4 * SensorManager.STANDARD_GRAVITY
 									* mGraphView.mScale[0], paint);
 						}
-						float draw_rss = mGraphView.mYOffset + rss * mGraphView.mScale[0];
+						float draw_rss = mGraphView.mYOffset + rss
+								* mGraphView.mScale[0];
 						paint.setColor(mGraphView.mColors[0]);
-						canvas.drawLine(mLastX, mLastValues[0], newX,
-								draw_rss, paint);
+						canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
+								paint);
 						mLastValues[0] = draw_rss;
 						// Calculate Vve numeric integral over RSS
 						if (RssStartTime == 0) {
@@ -137,8 +122,7 @@ public class FallDetector implements SensorEventListener {
 							vve += mRssValues[i];
 						}
 						vve = (vve * VveWindow) / mRssCount;
-						if (vve < VveTreshold
-								* SensorManager.STANDARD_GRAVITY
+						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
 								&& activity.VveTime == 0) {
 							activity.VveVal = vve;
 							activity.VveTime = date.getTime();
@@ -148,7 +132,8 @@ public class FallDetector implements SensorEventListener {
 									- SensorManager.STANDARD_GRAVITY
 									* mGraphView.mScale[1] - 10, paint);
 						}
-						vve = mGraphView.mYOffset * (3.0f / 2) + vve * mGraphView.mScale[1];
+						vve = mGraphView.mYOffset * (3.0f / 2) + vve
+								* mGraphView.mScale[1];
 						paint.setColor(mGraphView.mColors[1]);
 						canvas.drawLine(mLastX, mLastValues[1], newX, vve,
 								paint);
@@ -158,23 +143,26 @@ public class FallDetector implements SensorEventListener {
 					} else if (event.type == Sensor.TYPE_ORIENTATION) {
 						// Calculate orientation
 						float ori = (90 - Math.abs(event.values[1]));
-						float draw_ori = mGraphView.mYOffset * 3 + ori * mGraphView.mScale[2];
+						float draw_ori = mGraphView.mYOffset * 3 + ori
+								* mGraphView.mScale[2];
 						paint.setColor(mGraphView.mColors[2]);
 						canvas.drawLine(mLastXOri, mLastValues[2], newX,
 								draw_ori, paint);
 						mLastValues[2] = draw_ori;
 						// Calculate Position feature
-						long wait_interval = (activity.RssTime != 0 ? date.getTime()
-								- activity.RssTime : (activity.VveTime != 0 ? date.getTime()
-								- activity.VveTime : 0));
+						long wait_interval = (activity.RssTime != 0 ? date
+								.getTime() - activity.RssTime
+								: (activity.VveTime != 0 ? date.getTime()
+										- activity.VveTime : 0));
 						if (wait_interval >= OriOffset) {
 							if (OriStartTime == 0)
 								OriStartTime = date.getTime();
 							else if (date.getTime() - OriStartTime < OriWindow) {
 								OriValues[ori_index++] = ori;
-								canvas.drawLine(mLastXOri, mGraphView.mYOffset * 3
-										+ 90 * mGraphView.mScale[2] - 2, newX,
-										mGraphView.mYOffset * 3 + 90 * mGraphView.mScale[2] - 2,
+								canvas.drawLine(mLastXOri, mGraphView.mYOffset
+										* 3 + 90 * mGraphView.mScale[2] - 2,
+										newX, mGraphView.mYOffset * 3 + 90
+												* mGraphView.mScale[2] - 2,
 										paint);
 							} else {
 								int count = 0;
@@ -185,11 +173,12 @@ public class FallDetector implements SensorEventListener {
 								if (count / ori_index >= OriConstraint
 										&& activity.hasAcquiredGps) {
 									// A fall has been detected => Time to
-									// take
-									// action!!!
+									// take action!!!
 									paint.setColor(0xFF0000FF);
-									canvas.drawText("v", newX - 4, mGraphView.mYOffset
-											* 3 + 90 * mGraphView.mScale[2] - 2, paint);
+									canvas.drawText("v", newX - 4,
+											mGraphView.mYOffset * 3 + 90
+													* mGraphView.mScale[2] - 2,
+											paint);
 									activity.fall_detected = true;
 								}
 								// Reset variables for next fall

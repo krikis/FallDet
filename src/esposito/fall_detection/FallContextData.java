@@ -11,12 +11,13 @@ import org.istmusic.mw.context.model.api.IValue;
 public class FallContextData implements IContextData {
 
 	private static final long serialVersionUID = -3775530819922307210L;
-	
+
 	private final VveContextValue vveContextValue;
 	private final RssContextValue rssContextValue;
 	private final CreateTimeContextValue timeContextValue;
 
-	public FallContextData(final float vveVal, final float rssVal, final long time) {
+	public FallContextData(final float vveVal, final float rssVal,
+			final long time) {
 		vveContextValue = new VveContextValue(vveVal);
 		rssContextValue = new RssContextValue(rssVal);
 		timeContextValue = new CreateTimeContextValue(time);
@@ -26,7 +27,7 @@ public class FallContextData implements IContextData {
 	public IContextValue getContextValue(IScope scopeKey) {
 		if (scopeKey.equals(VveContextValue.SCOPE)) {
 			return vveContextValue;
-		} else if(scopeKey.equals(RssContextValue.SCOPE)) {
+		} else if (scopeKey.equals(RssContextValue.SCOPE)) {
 			return rssContextValue;
 		} else if (scopeKey.equals(CreateTimeContextValue.SCOPE)) {
 			return timeContextValue;

@@ -2,6 +2,7 @@ package esposito.fall_detection;
 
 import java.util.Date;
 
+import org.istmusic.mw.context.plugins.AbstractContextPlugin;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
@@ -14,7 +15,8 @@ import android.hardware.SensorManager;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-public class FallDetector implements SensorEventListener {
+public class FallDetector extends AbstractContextPlugin implements
+		SensorEventListener {
 
 	private float mLastValues[] = new float[3];
 	protected final float RssTreshold = 2.8f;
@@ -36,11 +38,14 @@ public class FallDetector implements SensorEventListener {
 	protected float newX;
 	private GraphView mGraphView;
 
+	public static final String POWER_PLUGIN_ID = "Fall Detector Plugin";
+
 	private SensorManagerSimulator mSensorManager;
 
 	private FallDetection activity;
 
 	public FallDetector(FallDetection activity) {
+		super(POWER_PLUGIN_ID);
 		this.activity = activity;
 		this.mGraphView = activity.mGraphView;
 		// Code for accessing the real sensors
@@ -88,11 +93,16 @@ public class FallDetector implements SensorEventListener {
 								2)
 								+ Math.pow(event.values[1], 2)
 								+ Math.pow(event.values[2], 2));
+						// Rss feature detected?
 						if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY
 								&& activity.RssTime == 0) {
 							if (activity.VveTime == 0) {
 								activity.RssVal = rss;
 								activity.RssTime = date.getTime();
+								// Fire a context for this feature
+								RssContext rssContext = new RssContext(
+										POWER_PLUGIN_ID, rss, date.getTime());
+								fireContextChangedEvent(this, rssContext);
 							}
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("v", newX - 3, mGraphView.mYOffset
@@ -122,10 +132,15 @@ public class FallDetector implements SensorEventListener {
 							vve += mRssValues[i];
 						}
 						vve = (vve * VveWindow) / mRssCount;
+						// Vve feature detected?
 						if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY
 								&& activity.VveTime == 0) {
 							activity.VveVal = vve;
 							activity.VveTime = date.getTime();
+							// Fire a context for this feature
+							VveContext vveContext = new VveContext(
+									POWER_PLUGIN_ID, vve, date.getTime());
+							fireContextChangedEvent(this, vveContext);
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mGraphView.mYOffset
 									/ 2.0f - SensorManager.STANDARD_GRAVITY
@@ -169,10 +184,18 @@ public class FallDetector implements SensorEventListener {
 									if (OriValues[i] > OriTreshold)
 										count++;
 								}
+								// Posture feature detected?
 								if (count / ori_index >= OriConstraint
 										&& activity.hasAcquiredGps) {
-									// A fall has been detected => Time to
-									// take action!!!
+									// A fall has been detected
+									FallContext fallContext = new FallContext(
+											POWER_PLUGIN_ID,
+											activity.VveVal,
+											activity.RssVal,
+											(activity.VveTime != 0 ? activity.VveTime
+													: (activity.RssTime != 0 ? activity.RssTime
+															: date.getTime())));
+									fireContextChangedEvent(this, fallContext);
 									paint.setColor(0xFF0000FF);
 									canvas.drawText("v", newX - 4,
 											mGraphView.mYOffset * 3 + 90

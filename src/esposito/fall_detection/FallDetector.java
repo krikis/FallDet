@@ -2,6 +2,11 @@ package esposito.fall_detection;
 
 import java.util.Date;
 
+import org.istmusic.mw.context.IContextAccess;
+import org.istmusic.mw.context.events.ContextChangedEvent;
+import org.istmusic.mw.context.events.IContextListener;
+import org.istmusic.mw.context.exceptions.ContextException;
+import org.istmusic.mw.context.model.api.IContextElement;
 import org.istmusic.mw.context.plugins.AbstractContextPlugin;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
@@ -37,6 +42,8 @@ public class FallDetector extends AbstractContextPlugin implements
 	protected float mLastX;
 	protected float newX;
 	private GraphView mGraphView;
+
+	protected static IContextElement pendingContext = null;
 
 	public static final String POWER_PLUGIN_ID = "Fall Detector Plugin";
 

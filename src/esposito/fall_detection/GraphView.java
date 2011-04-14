@@ -133,8 +133,7 @@ public class GraphView extends View {
 							paint);
 					zero = yoffset * 3;
 					cavas.drawText("0", 10, zero - 1, paint);
-					cavas.drawLine(mXOffset, zero, mXOffset - 2, zero,
-							paint);
+					cavas.drawLine(mXOffset, zero, mXOffset - 2, zero, paint);
 					float fortfiv = yoffset * 3 + 45 * mScale[2];
 					cavas.drawText("45", 3, fortfiv - 1, paint);
 					cavas.drawLine(mXOffset, fortfiv, mXOffset - 2, fortfiv,

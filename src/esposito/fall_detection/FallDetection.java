@@ -48,6 +48,9 @@ import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
 import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
+// IST-MUSIC libraries
+import org.istmusic.mw.context.model.api.*;
+
 public class FallDetection extends Activity {
 
 	static final int PROGRESS_DIALOG = 0;
@@ -516,20 +519,20 @@ public class FallDetection extends Activity {
 		// real code
 		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// simulation code
-		 mSensorManager = SensorManagerSimulator.getSystemService(this,
-		 SENSOR_SERVICE);
-		 mSensorManager.connectSimulator();
+		mSensorManager = SensorManagerSimulator.getSystemService(this,
+				SENSOR_SERVICE);
+		mSensorManager.connectSimulator();
 
 		// initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler();
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 		// Uncomment to create a location update for demonstration purposes
-		 Location location = new Location(LocationManager.GPS_PROVIDER);
-		 location.setLatitude(53.24015);
-		 location.setLongitude(6.5365);
-		 location.setTime((new Date()).getTime());
-		 locationUpdateHandler.onLocationChanged(location);
+		Location location = new Location(LocationManager.GPS_PROVIDER);
+		location.setLatitude(53.24015);
+		location.setLongitude(6.5365);
+		location.setTime((new Date()).getTime());
+		locationUpdateHandler.onLocationChanged(location);
 
 		// check whether gps is turned on
 		checkGPS();

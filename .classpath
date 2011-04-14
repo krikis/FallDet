@@ -4,5 +4,6 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="lib" path="lib/sensorsimulator-lib-1.1.0-rc1.jar"/>
+	<classpathentry kind="lib" path="lib/org.istmusic.mw.context-1.0.0.jar" sourcepath="/Users/krikis/Documents/Rug/2010-2011/periode3/ub_comp/music-middleware-src-1.0.0"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -96,11 +96,11 @@ public class FallDetector implements SensorEventListener {
 							}
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("v", newX - 3, mGraphView.mYOffset
-									+ 4 * SensorManager.STANDARD_GRAVITY
-									* mGraphView.mScale[0], paint);
+									* 2 + 4 * SensorManager.STANDARD_GRAVITY
+									* mGraphView.mScale[1], paint);
 						}
-						float draw_rss = mGraphView.mYOffset + rss
-								* mGraphView.mScale[0];
+						float draw_rss = mGraphView.mYOffset * 2 + rss
+								* mGraphView.mScale[1];
 						paint.setColor(mGraphView.mColors[0]);
 						canvas.drawLine(mLastX, mLastValues[0], newX, draw_rss,
 								paint);
@@ -128,12 +128,11 @@ public class FallDetector implements SensorEventListener {
 							activity.VveTime = date.getTime();
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mGraphView.mYOffset
-									* (3.0f / 2)
-									- SensorManager.STANDARD_GRAVITY
-									* mGraphView.mScale[1] - 10, paint);
+									/ 2.0f - SensorManager.STANDARD_GRAVITY
+									* mGraphView.mScale[0] - 10, paint);
 						}
-						vve = mGraphView.mYOffset * (3.0f / 2) + vve
-								* mGraphView.mScale[1];
+						vve = mGraphView.mYOffset / 2.0f + vve
+								* mGraphView.mScale[0];
 						paint.setColor(mGraphView.mColors[1]);
 						canvas.drawLine(mLastX, mLastValues[1], newX, vve,
 								paint);

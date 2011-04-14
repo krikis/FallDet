@@ -27,7 +27,7 @@ public class LocationUpdateHandler implements LocationListener {
 		// Uncomment the lines below to create a location update for
 		// demonstration purposes or use telnet to send a geo fix like this:
 		// telnet localhost 5554
-		// geo fix 6.553628 53.139285
+		// geo fix 53.14 6.5531
 
 		// Location location = new Location(LocationManager.GPS_PROVIDER);
 		// location.setLatitude(53.24015);

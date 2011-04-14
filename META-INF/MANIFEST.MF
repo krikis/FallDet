@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: FallDetection
+Bundle-SymbolicName: FallDetection
+Bundle-Version: 1.0.0
+Import-Package: esposito.fall_detection,
+ org.istmusic.mw.context,
+ org.istmusic.mw.context.events,
+ org.istmusic.mw.context.exceptions,
+ org.istmusic.mw.context.model.api
+Service-Component: OSGI-INF/FeatureListener.xml

@@ -129,7 +129,7 @@ public class FallDetector implements SensorEventListener {
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mGraphView.mYOffset
 									/ 2.0f - SensorManager.STANDARD_GRAVITY
-									* mGraphView.mScale[0] - 10, paint);
+									* mGraphView.mScale[0] + 10, paint);
 						}
 						vve = mGraphView.mYOffset / 2.0f + vve
 								* mGraphView.mScale[0];

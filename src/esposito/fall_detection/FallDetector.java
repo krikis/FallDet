@@ -2,12 +2,6 @@ package esposito.fall_detection;
 
 import java.util.Date;
 
-import org.istmusic.mw.context.IContextAccess;
-import org.istmusic.mw.context.events.ContextChangedEvent;
-import org.istmusic.mw.context.events.IContextListener;
-import org.istmusic.mw.context.exceptions.ContextException;
-import org.istmusic.mw.context.model.api.IContextElement;
-import org.istmusic.mw.context.plugins.AbstractContextPlugin;
 import org.openintents.sensorsimulator.hardware.Sensor;
 import org.openintents.sensorsimulator.hardware.SensorEvent;
 import org.openintents.sensorsimulator.hardware.SensorEventListener;
@@ -20,7 +14,7 @@ import android.hardware.SensorManager;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-public class FallDetector extends AbstractContextPlugin implements
+public class FallDetector implements
 		SensorEventListener {
 
 	private float mLastValues[] = new float[3];
@@ -43,23 +37,18 @@ public class FallDetector extends AbstractContextPlugin implements
 	protected float newX;
 	private GraphView mGraphView;
 
-	protected static IContextElement pendingContext = null;
-
-	public static final String POWER_PLUGIN_ID = "Fall Detector Plugin";
-
 	private SensorManagerSimulator mSensorManager;
 
 	private FallDetection activity;
 
 	public FallDetector(FallDetection activity) {
-		super(POWER_PLUGIN_ID);
 		this.activity = activity;
 		this.mGraphView = activity.mGraphView;
 		// Code for accessing the real sensors
 		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// Sensor simulation code
 		mSensorManager = SensorManagerSimulator.getSystemService(activity,
-				activity.SENSOR_SERVICE);
+				FallDetection.SENSOR_SERVICE);
 		mSensorManager.connectSimulator();
 	}
 
@@ -106,10 +95,6 @@ public class FallDetector extends AbstractContextPlugin implements
 							if (activity.VveTime == 0) {
 								activity.RssVal = rss;
 								activity.RssTime = date.getTime();
-								// Fire a context for this feature
-								RssContext rssContext = new RssContext(
-										POWER_PLUGIN_ID, rss, date.getTime());
-								fireContextChangedEvent(this, rssContext);
 							}
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("v", newX - 3, mGraphView.mYOffset
@@ -144,10 +129,6 @@ public class FallDetector extends AbstractContextPlugin implements
 								&& activity.VveTime == 0) {
 							activity.VveVal = vve;
 							activity.VveTime = date.getTime();
-							// Fire a context for this feature
-							VveContext vveContext = new VveContext(
-									POWER_PLUGIN_ID, vve, date.getTime());
-							fireContextChangedEvent(this, vveContext);
 							paint.setColor(0xFF0000FF);
 							canvas.drawText("^", newX - 3, mGraphView.mYOffset
 									/ 2.0f - SensorManager.STANDARD_GRAVITY
@@ -195,14 +176,6 @@ public class FallDetector extends AbstractContextPlugin implements
 								if (count / ori_index >= OriConstraint
 										&& activity.hasAcquiredGps) {
 									// A fall has been detected
-									FallContext fallContext = new FallContext(
-											POWER_PLUGIN_ID,
-											activity.VveVal,
-											activity.RssVal,
-											(activity.VveTime != 0 ? activity.VveTime
-													: (activity.RssTime != 0 ? activity.RssTime
-															: date.getTime())));
-									fireContextChangedEvent(this, fallContext);
 									paint.setColor(0xFF0000FF);
 									canvas.drawText("v", newX - 4,
 											mGraphView.mYOffset * 3 + 90

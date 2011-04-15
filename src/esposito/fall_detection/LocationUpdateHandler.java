@@ -1,7 +1,5 @@
 package esposito.fall_detection;
 
-import java.util.Date;
-
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -27,7 +25,7 @@ public class LocationUpdateHandler implements LocationListener {
 		// Uncomment the lines below to create a location update for
 		// demonstration purposes or use telnet to send a geo fix like this:
 		// telnet localhost 5554
-		// geo fix 53.14 6.5531
+		// geo fix 6.5365 53.24015
 
 		// Location location = new Location(LocationManager.GPS_PROVIDER);
 		// location.setLatitude(53.24015);
@@ -38,8 +36,8 @@ public class LocationUpdateHandler implements LocationListener {
 
 	public void onLocationChanged(Location loc) {
 		synchronized (this) {
-			activity.lat = loc.getLatitude();
-			activity.lon = loc.getLongitude();
+			activity.latitude = loc.getLatitude();
+			activity.longintude = loc.getLongitude();
 		}
 	}
 

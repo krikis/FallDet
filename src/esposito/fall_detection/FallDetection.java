@@ -1,22 +1,5 @@
 package esposito.fall_detection;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.CoreConnectionPNames;
-
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -30,26 +13,52 @@ import android.util.Log;
 
 public class FallDetection extends Activity {
 
+	protected GraphView mGraphView;
+
+	protected LocationUpdateHandler locationUpdateHandler;
+	protected boolean hasAcquiredGps = false;
+	protected double latitude;
+	protected double longintude;
+
+	protected FallDetector mFallDetector;
+	protected long RssTime = 0;
+	protected float RssVal = 0;
+	protected long VveTime = 0;
+	protected float VveVal = 0;
+	protected boolean fall_detected = false;
+	protected boolean handling_fall = false;
+
 	static final int PROGRESS_DIALOG = 0;
 	ProgressThread progressThread;
 	ProgressDialog progressDialog;
-	protected GraphView mGraphView;
-	protected FallDetector mFallDetector;
-	protected LocationUpdateHandler locationUpdateHandler;
-	protected boolean hasAcquiredGps = false;
-	long RssTime = 0;
-	float RssVal = 0;
-	long VveTime = 0;
-	float VveVal = 0;
-	boolean fall_detected = false;
-	boolean handling_fall = false;
-	protected double lat;
-	protected double lon;
 
+	/**
+	 * Initialization of the Activity after it is first created. Must at least
+	 * call {@link android.app.Activity#setContentView setContentView()} to
+	 * describe what is to be displayed in the screen.
+	 */
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// Be sure to call the super class.
+		super.onCreate(savedInstanceState);
+		// Create the view
+		mGraphView = new GraphView(this);
+		setContentView(mGraphView);
+		// Create the fall detector
+		mFallDetector = new FallDetector(this);
+		// initialize location manager
+		locationUpdateHandler = new LocationUpdateHandler(this);
+		// check whether gps is turned on
+		locationUpdateHandler.checkGPS();
+		// set app orientation to landscape
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+	}
+
+	// Create a Progress Dialog that lets the user cancel reporting the fall
 	protected Dialog onCreateDialog(int id) {
 		switch (id) {
 		case PROGRESS_DIALOG:
-			progressDialog = new ProgressDialog(FallDetection.this);
+			progressDialog = new ProgressDialog(this);
 			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 			progressDialog.setMessage("Sending fall notification...");
 			progressDialog.setTitle("A fall was Detected!");
@@ -83,7 +92,8 @@ public class FallDetection extends Activity {
 				progressDialog.setProgress(0);
 				dismissDialog(PROGRESS_DIALOG);
 				progressThread.setState(ProgressThread.STATE_DONE);
-				postDetectedFall(); // report the fall
+				FallHandler handler = new FallHandler(FallDetection.this);
+				handler.postDetectedFall(); // report the fall
 			}
 		}
 	};
@@ -140,97 +150,11 @@ public class FallDetection extends Activity {
 		showDialog(PROGRESS_DIALOG);
 	}
 
-	// Post fall details to a REST web service
-	private void postDetectedFall() {
-
-		double lat2 = -1;
-		double lon2 = -1;
-
-		synchronized (this) {
-			lat2 = lat;
-			lon2 = lon;
-		}
-
-		// Making an HTTP post request and reading out the response
-		HttpClient httpclient = new DefaultHttpClient();
-		httpclient.getParams().setParameter(
-				CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
-		HttpPost httppost = new HttpPost("http://195.240.74.93:3000/falls");
-		// set post data
-		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-		nameValuePairs.add(new BasicNameValuePair("datetime",
-				(VveTime != 0 ? Long.toString(VveTime) : (RssTime != 0 ? Long
-						.toString(RssTime) : ""))));
-		nameValuePairs.add(new BasicNameValuePair("rss", (RssVal == 0 ? ""
-				: Float.toString(RssVal))));
-		nameValuePairs.add(new BasicNameValuePair("vve", (VveVal == 0 ? ""
-				: Float.toString(VveVal))));
-		nameValuePairs
-				.add(new BasicNameValuePair("lat", Double.toString(lat2)));
-		nameValuePairs
-				.add(new BasicNameValuePair("lon", Double.toString(lon2)));
-		try {
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-		} catch (UnsupportedEncodingException e) {
-			// notify failure
-		}
-		HttpResponse response;
-		String response_content = "";
-		try {
-			response = httpclient.execute(httppost);
-			if (response.getStatusLine().getStatusCode() == 200) {
-				HttpEntity entity = response.getEntity();
-				if (entity != null) {
-					InputStream instream = entity.getContent();
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(instream));
-					StringBuilder builder = new StringBuilder();
-					String line = null;
-					while ((line = reader.readLine()) != null) {
-						builder.append(line + "\n");
-					}
-					response_content = builder.toString();
-				}
-			}
-		} catch (Exception e) {
-			// notify failure
-		}
-		if (response_content == "fall_created") {
-			// notify success
-		} else {
-			// notify failure
-		}
-		// reset recorded values
-		reset_fall_values();
-	}
-
 	public void reset_fall_values() {
 		// reset recorded values
 		RssVal = VveVal = VveTime = RssTime = 0;
 		fall_detected = false;
 		handling_fall = false;
-	}
-
-	/**
-	 * Initialization of the Activity after it is first created. Must at least
-	 * call {@link android.app.Activity#setContentView setContentView()} to
-	 * describe what is to be displayed in the screen.
-	 */
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		// Be sure to call the super class.
-		super.onCreate(savedInstanceState);
-		// Create the view
-		mGraphView = new GraphView(this);
-		setContentView(mGraphView);
-		// Create the fall detector
-		mFallDetector = new FallDetector(this);
-		// initialize location manager
-		locationUpdateHandler = new LocationUpdateHandler(this);
-		// check whether gps is turned on
-		locationUpdateHandler.checkGPS();
-		// set app orientation to landscape
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 	}
 
 	@Override

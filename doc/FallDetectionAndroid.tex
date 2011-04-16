@@ -1,0 +1,211 @@
+%
+%  Social Hosting
+%
+%  Created by Samuel Esposito and Grayson Kleine on 2011-04-15.
+%
+\documentclass[a4paper, 10pt]{article}
+
+\usepackage[english]{babel}
+
+% Use utf-8 encoding for foreign characters
+\usepackage[utf8]{inputenc}
+
+% Setup for fullpage use
+\usepackage{fullpage}
+
+\usepackage{url}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+
+% Multipart figures
+%\usepackage{subfigure}
+
+% More symbols
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{latexsym}
+
+% Surround parts of graphics with box
+\usepackage{boxedminipage}
+
+% Package for including code in the document
+\usepackage{listings}
+\usepackage[table]{xcolor}
+\usepackage{color}
+
+\usepackage{amsmath}
+
+% If you want to generate a toc for each chapter (use with book)
+\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+
+\renewcommand{\familydefault}{\sfdefault}
+
+\title{Fall Detection with Android\\~\\Ubiquitous Computing -- 2010-2011\\~}
+\author{Samuel Esposito \& Grayson Kleine}
+
+\date{}
+
+\definecolor{grijs}{rgb}{.92,.92,.92}
+\lstset{
+  language=java,
+  basicstyle=\footnotesize,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\footnotesize,
+  stepnumber=1,
+  numbersep=5pt,
+  backgroundcolor=\color{grijs},
+  showspaces=false,
+  showtabs=false
+  commentstyle=\itshape,
+  tabsize=8,
+  postbreak=,
+  breaklines=true
+}
+
+\begin{document}
+
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+
+\maketitle
+
+\section{Introduction}
+In this document we discuss the Android based fall detection software we built for the Ubiquitous Computing course at the University of Groningen. The intent of the project was to create an Android application that would detect a person's fall while carrying an Android smartphone. The application should cleverly process the smartphone's sensor data in order to distinguish a dangerous fall from other daily activities that involve sudden movements, such as sitting down or running. Unless the user cancels the application within 10 seconds after a fall was detected, it should send out a call for aid.
+
+In the next section we briefly discuss a set of algorithms for the calculation of fall features that are indispensable to sensitive and specific fall detection. After that we discuss our implementation of the fall detection software on Android and document the steps to take in order to deploy it, including simulation. Finally we evaluate the project and discuss our main results.
+
+\section{Fall Features}
+There is plenty of literature describing fall features that can be calculated from raw sensor data. We chose to use the article on fall detection of A. K. Bourke et. \textit{al.}\footnote{Assessment of waist-worn tri-axial accelerometer based fall-detection algorithms using continuous unsupervised activities. Bourke AK, van de Ven P, Gamble M, O'Connor R, Murphy K, Bogan E, McQuade E, Finucane P, Olaighin G, Nelson J. Conf Proc IEEE Eng Med Biol Soc. 2010;2010:2782-5. PMID: 21095967 [PubMed - indexed for MEDLINE]} as a base for this project because it gives an up to date overview of the state of the art and compares different algorithms for sensitivity (detecting a fall when it occurs) and specificity (discerning a fall from other activities). The results of their research is that the combination of three features yields the best results in terms of sensitivity and specificity: vertical velocity, fall impact and posture. We discuss each of these features separately below.
+
+The fall impact is the most commonly used fall feature as it is most easy to derive from the raw data of a tri-axial accelerometer. It is calculated as the root sum of squares of the acceleration on each axis, from now on referred to as $RSS$: \[RSS = \sqrt{x^2 + y^2 + z^2}\] The $RSS$ gives an indication of the forces that act on the smartphone during impact measured in $g$ (gravity). The harder a person falls, the bigger the $g$-forces on the smartphone will be and the higher the $RSS$ value is. Based on their findings and the consensus in the field of fall detection, Bourke et. \textit{al.} put forward a threshold of $2.8g$ for the $RSS$ value: every value higher than this threshold is considered as a fall feature.
+
+Another less straightforward feature of a fall is the vertical velocity. When a person makes a free fall, the g-force on the smartphone is compensated by the downward acceleration for a small period of time: the smartphone experiences zero-gravity. This fall feature, henceforth referred to as $VVE$ (vertical velocity), is calculated by numerically integrating the difference of the $RSS$ with $1g$ (9.80665) for a small time window ($\Delta T = 0.6s$): \[VVE = \int\limits_{\Delta T} \! (RSS(t) - 1g) \, \mathrm{d}t\] The higher the vertical velocity of the smartphone, the lower the value of the $VVE$ feature. Bourke et. \textit{al.} determined that a fall should be detected when the value of $VVE$ drops below $-0.7$.
+
+Finally there is the human posture to take into account. When a person makes a dangerous fall for which aid is needed, he or she is expected to remain in a horizontal position for some time after the fall. When the smartphone is carried in a pocket, it should also maintain this horizontal position. A horizontal position in the context of fall detection is defined as follows: the smartphone must have an angle between 0º and 30º from the horizon for 75\% of the time during a 2 second interval 1 second after an $RSS$ or $VVE$ feature was detected.
+
+As mentioned above, Bourke et. textit{al.} showed in their article that the best results are obtained when the combination of vertical velocity, fall impact and posture is used for detecting a fall. More specifically the detection of a fall should be marked by either a $VVE$ feature followed by a posture feature or an $RSS$ feature followed by a posture feature.
+
+Now that the theoretical details behind fall detection are clear we will shift focus to the implementation of the above algorithms on Android.
+
+\section{Fall Detection on Android}
+In this section we discuss the implementation of the fall detection application for the Android platform. First we explain how to retrieve sensor data on an Android smartphone and implement the algorithms for calculating the different fall features\footnote{$VVE$ (vertical velocity), $RSS$ (fall impact) and posture (See chapter 2: Fall Features).} from this raw data. Next we handle sending a fall notification to a server and allowing the user to cancel the sending within 10 seconds. Finally we wrap this all together into an Android activity.
+
+\subsection{Calculating Fall Features}
+To get access to sensor data on the Android platform one has to create a class implementing the `SensorEventListener' interface and register it with the android `SensorManager' as shown in the listing below.
+\begin{lstlisting}
+public class FallDetector implements
+    SensorEventListener {
+    
+  private SensorManager mSensorManager = 
+                  (SensorManager) getSystemService(SENSOR_SERVICE);
+    
+  public void registerListeners() {
+    mSensorManager.registerListener(this,
+        mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+        SensorManager.SENSOR_DELAY_UI);
+    mSensorManager.registerListener(this,
+        mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+        SensorManager.SENSOR_DELAY_UI);
+  }  
+  ...  
+}
+\end{lstlisting}
+By implementing the `onSensorChanged' method the sensor data can be captured and processed. We are particularly interested in the accelerometer data for calculating the $RSS$ and $VVE$ features and the orientation sensor for deriving the posture feature. The listing below shows how to filter for the right type of sensor and access the available data.
+\begin{lstlisting}
+@Override
+public void onSensorChanged(SensorEvent event) {
+	synchronized (this) {
+    if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+      event.values[0]; // Acceleration minus Gx on the x-axis
+      event.values[1]; // Acceleration minus Gy on the y-axis
+      event.values[2]; // Acceleration minus Gz on the z-axis
+    } else if (event.type == Sensor.TYPE_ORIENTATION) {      
+      event.values[0]; // Azimuth, angle between the magnetic north direction and the
+                       // y-axis, around the z-axis (0 to 359). 
+                       // 0=North, 90=East, 180=South, 270=West
+      event.values[1]; // Pitch, rotation around x-axis (-180 to 180)
+      event.values[2]; // Roll, rotation around y-axis (-90 to 90)
+    }
+  }
+}
+\end{lstlisting}
+The $RSS$ feature is calculated by taking the root sum of squares of the accelerometer event values. When the values exceeds the threshold ($2.8g$), an $RSS$ feature is detected. This is implemented below.
+\begin{lstlisting}
+protected final float RssTreshold = 2.8f;
+...
+float rss = (float) Math.sqrt(Math.pow(event.values[0], 2)
+                        		+ Math.pow(event.values[1], 2)
+                        		+ Math.pow(event.values[2], 2));
+if (rss > RssTreshold * SensorManager.STANDARD_GRAVITY) {  
+  // Rss feature detected!
+}
+\end{lstlisting}
+The $VVE$ feature in turn is calculated by taking the numerical integer\footnote{The numerical integer is approximated using Simpson's rule ($2^{nd}$ order polynomial).\\Source: http://en.wikipedia.org/wiki/Simpson\%27s\_rule} of the $RSS$ minus $1g$ in a time window of $0.6s$. When this value goes below the $VVE$ threshold ($-0.7g$), a $VVE$ feature is detected. This is implemented in the listing below.
+\begin{lstlisting}
+private float mRssValues[] = new float[256];
+private int mRssCount = 0;
+private int mRssIndex = 0;
+private long RssStartTime = 0;
+protected final float VveWindow = 0.6f;
+protected final float VveTreshold = -0.7f;
+...
+// Store all RSS values in the window in a circular array
+if (RssStartTime == 0) {
+	RssStartTime = date.getTime();
+	mRssCount++;
+} else if (date.getTime() - RssStartTime <= VveWindow * 1000
+		&& mRssCount < mRssValues.length) {
+	mRssIndex = mRssCount++;
+} else {
+	mRssIndex = ++mRssIndex % mRssCount;
+}
+mRssValues[mRssIndex] = rss
+		- SensorManager.STANDARD_GRAVITY;
+// Calculate the numerical integer over all stored RSS values
+float vve = 0;
+for (int i = 0; i < mRssCount; i++) {
+	vve += mRssValues[i];
+}
+vve = (vve * VveWindow) / mRssCount;
+if (vve < VveTreshold * SensorManager.STANDARD_GRAVITY) {
+  // Vve feature detected!
+}
+\end{lstlisting}
+One second after either a $VVE$ feature or an $RSS$ feature was detected, posture data is collected in a 2 second time window in order to detect the posture feature. The posture data itself is derived from the orientation sensor pitch (see above). When more than 75\% of the collected posture data in the window has an angle smaller than 30º, the posture feature has been detected, and with that a fall has been detected.
+
+
+\subsection{RESTfull Fall Notification}
+
+\subsection{Android Activity}
+
+\section{Deploying the Application}
+
+\section{Evaluation}
+\section{Results}
+
+
+\end{document}

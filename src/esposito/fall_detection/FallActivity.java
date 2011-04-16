@@ -11,7 +11,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-public class FallDetection extends Activity {
+public class FallActivity extends Activity {
 
 	protected GraphView mGraphView;
 
@@ -92,7 +92,7 @@ public class FallDetection extends Activity {
 				progressDialog.setProgress(0);
 				dismissDialog(PROGRESS_DIALOG);
 				progressThread.setState(ProgressThread.STATE_DONE);
-				FallHandler handler = new FallHandler(FallDetection.this);
+				FallHandler handler = new FallHandler(FallActivity.this);
 				handler.postDetectedFall(); // report the fall
 			}
 		}

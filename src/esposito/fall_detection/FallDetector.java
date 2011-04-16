@@ -39,16 +39,16 @@ public class FallDetector implements
 
 	private SensorManagerSimulator mSensorManager;
 
-	private FallDetection activity;
+	private FallActivity activity;
 
-	public FallDetector(FallDetection activity) {
+	public FallDetector(FallActivity activity) {
 		this.activity = activity;
 		this.mGraphView = activity.mGraphView;
 		// Code for accessing the real sensors
 		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		// Sensor simulation code
 		mSensorManager = SensorManagerSimulator.getSystemService(activity,
-				FallDetection.SENSOR_SERVICE);
+				FallActivity.SENSOR_SERVICE);
 		mSensorManager.connectSimulator();
 	}
 

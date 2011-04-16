@@ -12,11 +12,11 @@ import android.os.Bundle;
 
 public class LocationUpdateHandler implements LocationListener {
 
-	private FallDetection activity;
+	private FallActivity activity;
 	protected LocationManager locationManager;
 	protected GpsStatus.Listener gpsListener = null;
 
-	public LocationUpdateHandler(FallDetection activity) {
+	public LocationUpdateHandler(FallActivity activity) {
 		this.activity = activity;
 
 		locationManager = (LocationManager) activity

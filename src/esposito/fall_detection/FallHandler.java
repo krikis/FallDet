@@ -19,9 +19,9 @@ import org.apache.http.params.CoreConnectionPNames;
 
 public class FallHandler {
 
-	private FallDetection activity;
+	private FallActivity activity;
 
-	public FallHandler(FallDetection activity) {
+	public FallHandler(FallActivity activity) {
 		this.activity = activity;
 	}
 

@@ -23,9 +23,9 @@ public class GraphView extends View {
 	private float mMaxX;
 	protected float mSpeed = 1.0f;
 
-	private FallDetection activity;
+	private FallActivity activity;
 
-	public GraphView(FallDetection activity) {
+	public GraphView(FallActivity activity) {
 		super(activity);
 		this.activity = activity;
 

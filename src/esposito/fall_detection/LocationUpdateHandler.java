@@ -18,7 +18,7 @@ public class LocationUpdateHandler implements LocationListener {
 
 	public LocationUpdateHandler(FallActivity activity) {
 		this.activity = activity;
-
+	    // Get location manager
 		locationManager = (LocationManager) activity
 				.getSystemService(Context.LOCATION_SERVICE);
 
@@ -34,6 +34,7 @@ public class LocationUpdateHandler implements LocationListener {
 		// onLocationChanged(location);
 	}
 
+	// Handle location updates
 	public void onLocationChanged(Location loc) {
 		synchronized (this) {
 			activity.latitude = loc.getLatitude();
@@ -97,7 +98,7 @@ public class LocationUpdateHandler implements LocationListener {
 			};
 
 			locationManager.addGpsStatusListener(gpsListener);
-
+		    // Request location updates
 			locationManager.requestLocationUpdates(
 					LocationManager.GPS_PROVIDER, 0, 0,
 					activity.locationUpdateHandler);

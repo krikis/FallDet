@@ -107,7 +107,95 @@ if (wait_interval >= OriOffset) {
 //=============================================================
 
 
-//=============================================================
-
 
 //=============================================================
+// Making an HTTP post request and reading out the response
+HttpClient httpclient = new DefaultHttpClient();
+httpclient.getParams().setParameter(
+    CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
+HttpPost httppost = new HttpPost("http://web.service.host/falls");
+List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+// Set fall timestamp
+nameValuePairs.add(new BasicNameValuePair("datetime",
+    (activity.VveTime != 0 ? Long.toString(activity.VveTime)
+        : (activity.RssTime != 0 ? Long
+            .toString(activity.RssTime) : ""))));
+// Set RSS feature
+nameValuePairs.add(new BasicNameValuePair("rss",
+    (activity.RssVal == 0 ? "" : Float.toString(activity.RssVal))));
+// Set VVE feature
+nameValuePairs.add(new BasicNameValuePair("vve",
+    (activity.VveVal == 0 ? "" : Float.toString(activity.VveVal))));
+// Set user location
+nameValuePairs
+    .add(new BasicNameValuePair("lat", Double.toString(latitude)));
+nameValuePairs
+    .add(new BasicNameValuePair("lon", Double.toString(longitude)));
+try {
+  httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+} catch (UnsupportedEncodingException e) {
+  ...
+}
+// Send the notification
+HttpResponse response;
+try {
+  response = httpclient.execute(httppost);
+} catch (Exception e) {
+  ...
+}
+//=============================================================
+public class LocationUpdateHandler implements LocationListener {
+
+  private FallActivity activity;
+  protected LocationManager locationManager;
+
+  public LocationUpdateHandler(FallActivity activity) {
+    this.activity = activity;
+    // Get location manager
+    locationManager = (LocationManager) activity
+        .getSystemService(Context.LOCATION_SERVICE);
+    // Request location updates
+    locationManager.requestLocationUpdates(
+        LocationManager.GPS_PROVIDER, 0, 0,
+        activity.locationUpdateHandler);
+  }
+
+  // Handle location updates
+  public void onLocationChanged(Location loc) {
+    synchronized (this) {
+      activity.latitude = loc.getLatitude();
+      activity.longintude = loc.getLongitude();
+    }
+  }
+}
+//=============================================================
+public class FallActivity extends Activity {
+
+  protected GraphView mGraphView;
+
+  protected FallDetector mFallDetector;
+
+  protected LocationUpdateHandler locationUpdateHandler;
+
+  /**
+   * Initialization of the Activity after it is first created. Must at least
+   * call {@link android.app.Activity#setContentView setContentView()} to
+   * describe what is to be displayed in the screen.
+   */
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    // Be sure to call the super class.
+    super.onCreate(savedInstanceState);
+    // Create the view
+    mGraphView = new GraphView(this);
+    setContentView(mGraphView);
+    // Create the fall detector
+    mFallDetector = new FallDetector(this);
+    // Initialize location manager
+    locationUpdateHandler = new LocationUpdateHandler(this);
+    // Check whether gps is turned on
+    locationUpdateHandler.checkGPS();
+    // Set app orientation to landscape
+    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+  }
+}

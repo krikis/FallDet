@@ -235,9 +235,100 @@ if (wait_interval >= OriOffset) {
 When either a $VVE$ feature or an $RSS$ feature has been detected followed by the detection of a posture feature, a fall has been detected. The fall is handled by sending a call for aid to a server, which is described in the next section.
 
 \subsection{RESTfull Fall Notification}
-For every fall that has been detected, a fall notification is sent to a RESTfull web service. Before sending the notification, a progress dialog is shown offering the user the opportunity to cancel it within 10 seconds. 
+For every fall that has been detected, a fall notification is sent to a RESTfull web service. Before sending the notification, a progress dialog is shown offering the user the opportunity to cancel it within 10 seconds. With every fall notification the current user location, if available, is included in the message. Below the code for accessing the smartphone's location is listed.
+\begin{lstlisting}
+public class LocationUpdateHandler implements LocationListener {
+
+  private FallActivity activity;
+  protected LocationManager locationManager;
+
+  public LocationUpdateHandler(FallActivity activity) {
+    this.activity = activity;
+    // Get location manager
+    locationManager = (LocationManager) activity
+        .getSystemService(Context.LOCATION_SERVICE);
+    // Request location updates
+    locationManager.requestLocationUpdates(
+        LocationManager.GPS_PROVIDER, 0, 0,
+        activity.locationUpdateHandler);
+  }
+
+  // Handle location updates
+  public void onLocationChanged(Location loc) {
+    synchronized (this) {
+      activity.latitude = loc.getLatitude();
+      activity.longintude = loc.getLongitude();
+    }
+  }
+}
+\end{lstlisting}
+Beneath the actual fall notification is compiled and sent.
+\begin{lstlisting}
+// Making an HTTP post request and reading out the response
+HttpClient httpclient = new DefaultHttpClient();
+httpclient.getParams().setParameter(
+    CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
+HttpPost httppost = new HttpPost("http://web.service.host/falls");
+List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+// Set fall timestamp
+nameValuePairs.add(new BasicNameValuePair("datetime",
+    (activity.VveTime != 0 ? Long.toString(activity.VveTime)
+        : (activity.RssTime != 0 ? Long
+            .toString(activity.RssTime) : ""))));
+// Set RSS feature
+nameValuePairs.add(new BasicNameValuePair("rss",
+    (activity.RssVal == 0 ? "" : Float.toString(activity.RssVal))));
+// Set VVE feature
+nameValuePairs.add(new BasicNameValuePair("vve",
+    (activity.VveVal == 0 ? "" : Float.toString(activity.VveVal))));
+// Set user location
+nameValuePairs
+    .add(new BasicNameValuePair("lat", Double.toString(latitude)));
+nameValuePairs
+    .add(new BasicNameValuePair("lon", Double.toString(longitude)));
+try {
+  httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+} catch (UnsupportedEncodingException e) {
+  ...
+}
+// Send the notification
+HttpResponse response;
+try {
+  response = httpclient.execute(httppost);
+} catch (Exception e) {
+  ...
+}
+\end{lstlisting}
 
 \subsection{Android Activity}
+All of the applications functionality is bundled together in a so called Android activity. In this class the applications view is set and the objects for processing the sensor data are initialized.
+\begin{lstlisting}
+public class FallActivity extends Activity {
+
+  protected GraphView mGraphView;
+
+  protected FallDetector mFallDetector;
+
+  protected LocationUpdateHandler locationUpdateHandler;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    // Be sure to call the super class.
+    super.onCreate(savedInstanceState);
+    // Create the view
+    mGraphView = new GraphView(this);
+    setContentView(mGraphView);
+    // Create the fall detector
+    mFallDetector = new FallDetector(this);
+    // Initialize location manager
+    locationUpdateHandler = new LocationUpdateHandler(this);
+    // Check whether gps is turned on
+    locationUpdateHandler.checkGPS();
+    // Set app orientation to landscape
+    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+  }
+}
+\end{lstlisting}
 
 \section{Deployment}
 

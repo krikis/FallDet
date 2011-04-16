@@ -40,16 +40,19 @@ public class FallHandler {
 		httpclient.getParams().setParameter(
 				CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
 		HttpPost httppost = new HttpPost("http://195.240.74.93:3000/falls");
-		// set post data
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+		// Set fall timestamp
 		nameValuePairs.add(new BasicNameValuePair("datetime",
 				(activity.VveTime != 0 ? Long.toString(activity.VveTime)
 						: (activity.RssTime != 0 ? Long
 								.toString(activity.RssTime) : ""))));
+		// Set RSS feature
 		nameValuePairs.add(new BasicNameValuePair("rss",
 				(activity.RssVal == 0 ? "" : Float.toString(activity.RssVal))));
+		// Set VVE feature
 		nameValuePairs.add(new BasicNameValuePair("vve",
 				(activity.VveVal == 0 ? "" : Float.toString(activity.VveVal))));
+		// Set user location
 		nameValuePairs
 				.add(new BasicNameValuePair("lat", Double.toString(latitude)));
 		nameValuePairs

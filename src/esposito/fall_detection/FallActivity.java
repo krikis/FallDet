@@ -46,11 +46,11 @@ public class FallActivity extends Activity {
 		setContentView(mGraphView);
 		// Create the fall detector
 		mFallDetector = new FallDetector(this);
-		// initialize location manager
+		// Initialize location manager
 		locationUpdateHandler = new LocationUpdateHandler(this);
-		// check whether gps is turned on
+		// Check whether gps is turned on
 		locationUpdateHandler.checkGPS();
-		// set app orientation to landscape
+		// Set app orientation to landscape
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 	}
 

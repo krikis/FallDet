@@ -84,7 +84,7 @@ public class FallDetector implements
 					if (event.type == Sensor.TYPE_ACCELEROMETER) {
 						// determine stepsize
 						newX = mLastX + mGraphView.mSpeed;
-						// Calculalte RSS
+						// Calculate RSS feature
 						float rss = (float) Math.sqrt(Math.pow(event.values[0],
 								2)
 								+ Math.pow(event.values[1], 2)
@@ -119,6 +119,7 @@ public class FallDetector implements
 						}
 						mRssValues[mRssIndex] = rss
 								- SensorManager.STANDARD_GRAVITY;
+						// Calculate numeric integral
 						float vve = 0;
 						for (int i = 0; i < mRssCount; i++) {
 							vve += mRssValues[i];
@@ -143,7 +144,7 @@ public class FallDetector implements
 						// Increment graph position
 						mLastX = newX;
 					} else if (event.type == Sensor.TYPE_ORIENTATION) {
-						// Calculate orientation
+						// Calculate orientation wrt. hirozon
 						float ori = (90 - Math.abs(event.values[1]));
 						float draw_ori = mGraphView.mYOffset * 3 + ori
 								* mGraphView.mScale[2];
@@ -151,22 +152,25 @@ public class FallDetector implements
 						canvas.drawLine(mLastXOri, mLastValues[2], newX,
 								draw_ori, paint);
 						mLastValues[2] = draw_ori;
-						// Calculate Position feature
+						// Wait one second
 						long wait_interval = (activity.RssTime != 0 ? date
 								.getTime() - activity.RssTime
 								: (activity.VveTime != 0 ? date.getTime()
 										- activity.VveTime : 0));
 						if (wait_interval >= OriOffset) {
+							// Collect ori values for 2 seconds
 							if (OriStartTime == 0)
 								OriStartTime = date.getTime();
 							else if (date.getTime() - OriStartTime < OriWindow) {
-								OriValues[ori_index++] = ori;
+								if (ori_index < OriValues.length)
+									OriValues[ori_index++] = ori;
 								canvas.drawLine(mLastXOri, mGraphView.mYOffset
 										* 3 + 90 * mGraphView.mScale[2] - 2,
 										newX, mGraphView.mYOffset * 3 + 90
 												* mGraphView.mScale[2] - 2,
 										paint);
 							} else {
+								 // Calculate percentage above threshold
 								int count = 0;
 								for (int i = 0; i < ori_index; i++) {
 									if (OriValues[i] > OriTreshold)

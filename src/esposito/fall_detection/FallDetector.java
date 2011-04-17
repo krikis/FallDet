@@ -2,20 +2,19 @@ package esposito.fall_detection;
 
 import java.util.Date;
 
-import org.openintents.sensorsimulator.hardware.Sensor;
-import org.openintents.sensorsimulator.hardware.SensorEvent;
-import org.openintents.sensorsimulator.hardware.SensorEventListener;
-import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+//import org.openintents.sensorsimulator.hardware.Sensor;
+//import org.openintents.sensorsimulator.hardware.SensorEvent;
+//import org.openintents.sensorsimulator.hardware.SensorEventListener;
+//import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 
-//import android.hardware.Sensor;
-//import android.hardware.SensorEvent;
-//import android.hardware.SensorEventListener;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-public class FallDetector implements
-		SensorEventListener {
+public class FallDetector implements SensorEventListener {
 
 	private float mLastValues[] = new float[3];
 	protected final float RssTreshold = 2.8f;
@@ -37,7 +36,7 @@ public class FallDetector implements
 	protected float newX;
 	private GraphView mGraphView;
 
-	private SensorManagerSimulator mSensorManager;
+	private SensorManager mSensorManager;
 
 	private FallActivity activity;
 
@@ -45,11 +44,12 @@ public class FallDetector implements
 		this.activity = activity;
 		this.mGraphView = activity.mGraphView;
 		// Code for accessing the real sensors
-		// mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+		mSensorManager = (SensorManager) activity
+				.getSystemService(activity.SENSOR_SERVICE);
 		// Sensor simulation code
-		mSensorManager = SensorManagerSimulator.getSystemService(activity,
-				FallActivity.SENSOR_SERVICE);
-		mSensorManager.connectSimulator();
+		// mSensorManager = SensorManagerSimulator.getSystemService(activity,
+		// FallActivity.SENSOR_SERVICE);
+		// mSensorManager.connectSimulator();
 	}
 
 	public void registerListeners() {
@@ -81,7 +81,7 @@ public class FallDetector implements
 					final Canvas canvas = mGraphView.mCanvas;
 					final Paint paint = mGraphView.mPaint;
 					Date date = new Date();
-					if (event.type == Sensor.TYPE_ACCELEROMETER) {
+					if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 						// determine stepsize
 						newX = mLastX + mGraphView.mSpeed;
 						// Calculate RSS feature
@@ -143,7 +143,7 @@ public class FallDetector implements
 						mLastValues[1] = vve;
 						// Increment graph position
 						mLastX = newX;
-					} else if (event.type == Sensor.TYPE_ORIENTATION) {
+					} else if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
 						// Calculate orientation wrt. hirozon
 						float ori = (90 - Math.abs(event.values[1]));
 						float draw_ori = mGraphView.mYOffset * 3 + ori
@@ -170,7 +170,7 @@ public class FallDetector implements
 												* mGraphView.mScale[2] - 2,
 										paint);
 							} else {
-								 // Calculate percentage above threshold
+								// Calculate percentage above threshold
 								int count = 0;
 								for (int i = 0; i < ori_index; i++) {
 									if (OriValues[i] > OriTreshold)

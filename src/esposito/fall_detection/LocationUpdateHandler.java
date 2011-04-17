@@ -89,9 +89,9 @@ public class LocationUpdateHandler implements LocationListener {
 						if (propagateEvent) {
 							if (progD != null) {
 								progD.cancel();
-								propagateEvent = false;
-								activity.hasAcquiredGps = true;
 							}
+							propagateEvent = false;
+							activity.hasAcquiredGps = true;
 						}
 					}
 				}

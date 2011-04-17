@@ -186,6 +186,8 @@ public class FallDetector implements SensorEventListener {
 													* mGraphView.mScale[2] - 2,
 											paint);
 									activity.fall_detected = true;
+								} else {
+									activity.reset_fall_values();
 								}
 								// Reset variables for next fall
 								OriStartTime = ori_index = 0;

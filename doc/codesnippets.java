@@ -199,3 +199,29 @@ public class FallActivity extends Activity {
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
   }
 }
+//=============================================================
+//import org.openintents.sensorsimulator.hardware.Sensor;
+//import org.openintents.sensorsimulator.hardware.SensorEvent;
+//import org.openintents.sensorsimulator.hardware.SensorEventListener;
+//import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+//=============================================================
+import org.openintents.sensorsimulator.hardware.Sensor;
+import org.openintents.sensorsimulator.hardware.SensorEvent;
+import org.openintents.sensorsimulator.hardware.SensorEventListener;
+import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+
+// import android.hardware.Sensor;
+// import android.hardware.SensorEvent;
+// import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+//=============================================================
+//=============================================================
+//=============================================================
+//=============================================================
+//=============================================================
+//=============================================================

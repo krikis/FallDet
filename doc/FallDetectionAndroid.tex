@@ -333,7 +333,76 @@ public class FallActivity extends Activity {
 \section{Deployment}
 If you are to deploy the Android fall detection application on a smartphone or emulator starting from the source code, you need to install an appropriate development environment on your computer. One good option is to go with Eclipse 3.5 or greater\footnote{http://www.eclipse.org/downloads/} including the Java Development Tools plugin. Make sure you have the Java Development Kit 5 or 6 installed. After that you have to download and unpack/install the latest version of the Android SDK Starter Package\footnote{http://developer.android.com/sdk/index.html} and install the Android Development Tools plugin\footnote{http://developer.android.com/sdk/eclipse-adt.html} for Eclipse. 
 
-Now that all necessary software is in place, we will explain how to run the application on the Android emulator. Start by opening the Android SDK manager (from the Eclipse Window menu) and install the Android Platform version 2.1 (the application was not tested on later versions) from the Android Repository under the `Available packages' window. Next create a new virtual device that runs on this platform in the `Virtual devices' window. Now it is time to add the source code to a fresh Android project in Eclipse. Download the code from https://github.com/krikis/FallDet/zipball/master and extract the zipball it in some convenient folder. Next create a new Android project in Eclipse, select the option `Create project from existing source', browse for the previously downloaded source code and click finish. Rightclick on the  
+Now that all necessary software is in place, we will explain how to run the application on the Android emulator. Start by opening the Android SDK manager (from the Eclipse Window menu) and install the Android Platform version 2.1 (the application was not tested on later versions) from the Android Repository under the `Available packages' window. Next create a new virtual device that runs on this platform in the `Virtual devices' window. Now it is time to add the source code to a fresh Android project in Eclipse. Download the code from https://github.com/krikis/FallDet/zipball/master and extract the zipball it in some convenient folder. Next create a new Android project in Eclipse, select the option `Create project from existing source', browse for the previously downloaded source code and click finish. Right click on the project folder and select `Rus As $>$ Android Application' to run the fall detection application on the emulator\footnote{Select `Run As $>$ Run Configuration...' and manually select the target to directly run it on your smartphone.}.  
+
+When you run the application on the Android emulator, a progress dialog will be displayed waiting for the GPS to be activated. Click `Just go' to skip this step, we will explain it later. Now a graph is shown in which nothing much happens, as there is no sensor data coming in on the Emulator. To get some interesting results we need simulation. For this we use the SensorSimulator from OpenIntents\footnote{http://code.google.com/p/openintents/wiki/SensorSimulator}. This requires a number of steps: open the `platform-tools' folder of the android SDK in a console and type in the following command to install the SensorSimulatorSettings apk on the emulator: .adb install /full/path/to/project/folder/lib/SensorSimulatorSettings-1.1.0-rc1.apk. When the application was successfully installed, start it up. Next fire up the SensorSimulator jarfile in the project's lib directory. This will open a simulator interface displaying a set of controls and in a text-area a list of possible IP addresses and a port on which it listens. Enter these details in the corresponding text-fields in the SensorSimulatorSettings app on the emulator, then click the testing tab and click connect. Check all available sensors and see the values change as you fiddle with the controls in the simulator interface.
+
+The connection between the SensorSimulator and the emulator is now successfully set up. This leaves us only to change the project code to make it get its sensor data from the simulator. To do this, open the `FallDetector' java file in the project `src' folder and change it according to the instructions below\footnote{If you are a Git man, just run `git apply enable\_simulator.patch' and you are ready to go.}.
+
+The import lines for the sensor classes
+\begin{lstlisting}
+//import org.openintents.sensorsimulator.hardware.Sensor;
+//import org.openintents.sensorsimulator.hardware.SensorEvent;
+//import org.openintents.sensorsimulator.hardware.SensorEventListener;
+//import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+\end{lstlisting}
+should be changed to this
+\begin{lstlisting}
+import org.openintents.sensorsimulator.hardware.Sensor;
+import org.openintents.sensorsimulator.hardware.SensorEvent;
+import org.openintents.sensorsimulator.hardware.SensorEventListener;
+import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
+
+// import android.hardware.Sensor;
+// import android.hardware.SensorEvent;
+// import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+\end{lstlisting}
+The declaration of the sensor manager
+\begin{lstlisting}
+private SensorManager mSensorManager;
+\end{lstlisting}
+should be this:
+\begin{lstlisting}
+private SensorManagerSimulator mSensorManager;
+\end{lstlisting}
+The initialization of the manager
+\begin{lstlisting}
+mSensorManager = (SensorManager) activity
+		.getSystemService(activity.SENSOR_SERVICE);
+\end{lstlisting}
+has to be changed to this:
+\begin{lstlisting}
+mSensorManager = SensorManagerSimulator.getSystemService(activity,
+    FallActivity.SENSOR_SERVICE);
+mSensorManager.connectSimulator();
+\end{lstlisting}
+Finally the TWO references to the event sensor type
+\begin{lstlisting}
+event.sensor.getType() == Sensor.TYPE_ACCELEROMETER
+\end{lstlisting}
+should look like this:
+\begin{lstlisting}
+event.type == Sensor.TYPE_ACCELEROMETER
+\end{lstlisting}
+
+The application is now ready for interfacing with the SensorSimulator. Fire it up again by right clicking on the project folder and selecting `Rus As $>$ Android Application' (or just clicking the play button in the Eclipse toolbar). The application will once more try to activate the GPS. Open a telnet connection to the emulator and type in a geo fix with a longitude and latitude to provide the emulator with location data.
+\begin{lstlisting}
+$ telnet localhost 5554
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+Android Console: type 'help' for a list of commands
+geo fix 6.5365 53.24015
+OK
+\end{lstlisting}
+The application on the emulator will now happily proceed
+
 
 
 

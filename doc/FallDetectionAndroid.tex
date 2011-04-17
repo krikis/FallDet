@@ -13,7 +13,9 @@
 % Setup for fullpage use
 \usepackage{fullpage}
 
-\usepackage{url}
+\usepackage{xifthen}
+
+\usepackage{float}
 
 % Uncomment some of the following if you use the features
 %
@@ -57,6 +59,16 @@
 \else
 \usepackage{graphicx}
 \fi
+
+\newcommand{\image}[3][\textwidth]{%
+  \begin{figure}[H]%
+    \centering%
+    \ifthenelse{\isempty{#3}}%
+      {\setlength\fboxsep{0pt}\fbox{\includegraphics[width={#1}]{#2}}}%
+      {\includegraphics[width={#1}]{#2}}%
+    \label{fig:{#2}}%
+  \end{figure}
+}
 
 \renewcommand{\familydefault}{\sfdefault}
 
@@ -333,7 +345,7 @@ public class FallActivity extends Activity {
 \section{Deployment}
 If you are to deploy the Android fall detection application on a smartphone or emulator starting from the source code, you need to install an appropriate development environment on your computer. One good option is to go with Eclipse 3.5 or greater\footnote{http://www.eclipse.org/downloads/} including the Java Development Tools plugin. Make sure you have the Java Development Kit 5 or 6 installed. After that you have to download and unpack/install the latest version of the Android SDK Starter Package\footnote{http://developer.android.com/sdk/index.html} and install the Android Development Tools plugin\footnote{http://developer.android.com/sdk/eclipse-adt.html} for Eclipse. 
 
-Now that all necessary software is in place, we will explain how to run the application on the Android emulator. Start by opening the Android SDK manager (from the Eclipse Window menu) and install the Android Platform version 2.1 (the application was not tested on later versions) from the Android Repository under the `Available packages' window. Next create a new virtual device that runs on this platform in the `Virtual devices' window. Now it is time to add the source code to a fresh Android project in Eclipse. Download the code from https://github.com/krikis/FallDet/zipball/master and extract the zipball it in some convenient folder. Next create a new Android project in Eclipse, select the option `Create project from existing source', browse for the previously downloaded source code and click finish. Right click on the project folder and select `Rus As $>$ Android Application' to run the fall detection application on the emulator\footnote{Select `Run As $>$ Run Configuration...' and manually select the target to directly run it on your smartphone.}.  
+Now that all necessary software is in place, we will explain how to run the application on the Android emulator. Start by opening the Android SDK manager (from the Eclipse Window menu) and install the Android Platform version 2.1 (the application was not tested on later versions) from the Android Repository under the `Available packages' window. Next create a new virtual device that runs on this platform in the `Virtual devices' window. Now it is time to add the source code to a fresh Android project in Eclipse. Download the code from https://github.com/krikis/FallDet/zipball/master and extract the zipball it in some convenient folder. Next create a new Android project in Eclipse, select the option `Create project from existing source', browse for the previously downloaded source code and click finish. Right click on the project folder and select `Rus As $>$ Android Application' to run the fall detection application on the emulator\footnote{Select `Run As $>$ Run Configuration...' and manually select the target to directly run it on your smartphone.}. Yes it runs in landscape mode: press Ctrl-F11 to turn the screen of your emulator.
 
 When you run the application on the Android emulator, a progress dialog will be displayed waiting for the GPS to be activated. Click `Just go' to skip this step, we will explain it later. Now a graph is shown in which nothing much happens, as there is no sensor data coming in on the Emulator. To get some interesting results we need simulation. For this we use the SensorSimulator from OpenIntents\footnote{http://code.google.com/p/openintents/wiki/SensorSimulator}. This requires a number of steps: open the `platform-tools' folder of the android SDK in a console and type in the following command to install the SensorSimulatorSettings apk on the emulator: .adb install /full/path/to/project/folder/lib/SensorSimulatorSettings-1.1.0-rc1.apk. When the application was successfully installed, start it up. Next fire up the SensorSimulator jarfile in the project's lib directory. This will open a simulator interface displaying a set of controls and in a text-area a list of possible IP addresses and a port on which it listens. Enter these details in the corresponding text-fields in the SensorSimulatorSettings app on the emulator, then click the testing tab and click connect. Check all available sensors and see the values change as you fiddle with the controls in the simulator interface.
 
@@ -401,7 +413,8 @@ Android Console: type 'help' for a list of commands
 geo fix 6.5365 53.24015
 OK
 \end{lstlisting}
-The application on the emulator will now happily proceed
+The application on the emulator will now happily proceed and a GPS icon appeared in the top bar of the interface. Now you will see some lines proceed horizontally through the graph. The top graph displays the vertical velocity of the smartphone ($VVE$). In the middle the fall impact is shown ($RSS$). In the bottom the posture is shown. Switch back to the simulator interface to generate some sensor data (make sure to maximize the window). Select the `move' option and drag the wireframe of the phone around to generate some acceleration data.
+\image{simulator.png}{}
 
 
 

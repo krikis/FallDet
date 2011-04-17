@@ -39,6 +39,9 @@ INPUT /usr/local/texlive/2008/texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT /usr/local/texlive/2008/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
 INPUT /usr/local/texlive/2008/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
 INPUT /usr/local/texlive/2008/texmf-dist/fonts/tfm/public/cm/cmssi8.tfm
+INPUT simulator.png
+INPUT ./simulator.png
+INPUT ./simulator.png
 OUTPUT .FallDetectionAndroid.maf
 INPUT .FallDetectionAndroid.mtc
 INPUT .FallDetectionAndroid.mtc0

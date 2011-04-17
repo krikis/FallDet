@@ -2,7 +2,7 @@ public class FallDetector implements
     SensorEventListener {
     
   private SensorManager mSensorManager = 
-                  (SensorManager) getSystemService(SENSOR_SERVICE);
+    (SensorManager) activity.getSystemService(activity.SENSOR_SERVICE);
     
   public void registerListeners() {
     mSensorManager.registerListener(this,

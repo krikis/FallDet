@@ -119,7 +119,7 @@ public class FallDetector implements
     SensorEventListener {
     
   private SensorManager mSensorManager = 
-                  (SensorManager) getSystemService(SENSOR_SERVICE);
+    (SensorManager) activity.getSystemService(activity.SENSOR_SERVICE);
     
   public void registerListeners() {
     mSensorManager.registerListener(this,
@@ -331,7 +331,7 @@ public class FallActivity extends Activity {
 \section{Deployment}
 If you are to deploy the Android fall detection application on a smartphone or emulator starting from the source code, you need to install an appropriate development environment on your computer. One good option is to go with Eclipse 3.5 or greater\footnote{http://www.eclipse.org/downloads/} including the Java Development Tools plugin. Make sure you have the Java Development Kit 5 or 6 installed. After that you have to download and unpack/install the latest version of the Android SDK Starter Package\footnote{http://developer.android.com/sdk/index.html} and install the Android Development Tools plugin\footnote{http://developer.android.com/sdk/eclipse-adt.html} for Eclipse. 
 
-Now that all necessary software is in place, we will explain how to run the application on the Android emulator. Start by opening the Android SDK manager (from the Eclipse Window menu) and install the Android Platform version 2.1 (the application was not tested on later versions) from the Android Repository under the `Available packages' window. Next create a new virtual device that runs on this platform in the `Virtual devices' window. Now it is time to add the source code to a fresh Android project in Eclipse. Download the code from https://github.com/krikis/FallDet/zipball/master and extract the zipball it in your workspace.
+Now that all necessary software is in place, we will explain how to run the application on the Android emulator. Start by opening the Android SDK manager (from the Eclipse Window menu) and install the Android Platform version 2.1 (the application was not tested on later versions) from the Android Repository under the `Available packages' window. Next create a new virtual device that runs on this platform in the `Virtual devices' window. Now it is time to add the source code to a fresh Android project in Eclipse. Download the code from https://github.com/krikis/FallDet/zipball/master and extract the zipball it in some convenient folder. Next create a new Android project in Eclipse, select the option `Create project from existing source', browse for the previously downloaded source code and click finish. Rightclick on the  
 
 
 

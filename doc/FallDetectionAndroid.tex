@@ -426,10 +426,20 @@ Now a progress dialog is presented to the user to allow him to cancel the sendin
 \newpage
 If the user does not cancel the dialog, a notification is sent to a RESTfull webservice. The folder `server\_side' contains a Rails powered web application that receives the notifications and lists them in a web interface for demonstration purposes. 
 \image{server_site.png}{}
-By clicking on a row in the table the location of the fall is shown on a map.
+By clicking on a row in the table the location of the fall is shown on a map with a green arrow.
 \image{map.png}{}
 
-\section{Evaluation}
+\newpage
+\section{Evaluation and Future Work}
+In this project we built a smartphone application that saves lives. Powered by the latest research on fall detection it detects the fall of a person using three features: the vertical velocity of the smart phone, the fall impact and the posture after the fall. Thanks to the combination of these diverse features the application if very sensitive to a person's fall: it detects falls that have a very prominent vertical velocity, for instance when someone passes out, as well as falls that stand out in fall impact, for instance when falling from the stairs or while cycling. Furthermore because of the broad feature set the application is very specific. The well chosen thresholds for vertical velocity and fall impact allow it to distinguish a fall from other activities involving abrupt movements like sitting down. The posture feature, requiring the person to stay in horizontal position for 2 seconds after the fall, lets the application differ between falling and activities like jumping or running. 
+
+When a fall is detected, a call for aid including the person's location is sent to a service, so that  
+the emergency service can easily find the person and offer help in time. If the person does not need any emergency service, he or she can cancel the call for aid within 10 seconds. In the future it would be nice to not only send a message to a service when a fall is detected, but also call an emergency number allowing the person to talk to a nurse in order to better coordinate the assistance needed.
+
+A more technical aspect to the project is the way the internal fall data is handled. As the fall detection application is a context-aware software system, it would be nice to use a context middleware to handle the detected fall features. We put a lot of effort in integrating the IST-MUSIC framework for context-awareness\footnote{http://ist-music.berlios.de/site/} into our Android application. Unfortunately when it came to integrating the OSGi framework IST-MUSIC heavily relies on with the Android SDK, we were left without any specific documentation (IST-MUSIC was primarily built for JAVA ME and JAVA SE and ported to Android in the final stage). The java code implementing a complete fall ontology, the context models for each fall feature, a context plugin and a context listener specially written for the IST-MUSIC integration resides in a separate branch of our code repository\footnote{See https://github.com/krikis/FallDet/tree/contexts.}. Future development of the fall detection application should focus on further exploration of the porting of OSGi to Android and alternative solutions that use the available Android apis for context management.
+
+A last point of evaluation is the mode the Android application runs in. Currently the fall detection application runs as a standard Android `activity', that is: it can be launched by the user when he or she desires it and is suspended when the user starts another application. In order to make the fall detection really pervasive, the application should start up when the phone is turned on and keep running in the background whatever happens. This can be implemented with an Android `service'. Future work should focus on migrating the applications functionality to such a service to that falls are always detected, no matter what the user is doing with the smartphone.
+
 
 
 \section{Results}

@@ -63,9 +63,10 @@
 \newcommand{\image}[3][\textwidth]{%
   \begin{figure}[H]%
     \centering%
+    \setlength\fboxsep{0pt}\fbox{\includegraphics[width={#1}]{#2}}%
     \ifthenelse{\isempty{#3}}%
-      {\setlength\fboxsep{0pt}\fbox{\includegraphics[width={#1}]{#2}}}%
-      {\includegraphics[width={#1}]{#2}}%
+      {}%
+      {\caption{{#3}}}%
     \label{fig:{#2}}%
   \end{figure}
 }
@@ -443,6 +444,46 @@ A last point of evaluation is the mode the Android application runs in. Currentl
 
 
 \section{Results}
+To try to validate the thresholds described in chapter 2 a few test were performed, namely:
+\begin{itemize}
+\item Walking
+\item Biking 
+\item Running
+\item Letting the phone fall from different distance into a bed  and stairs
+\end{itemize}
+
+\newpage
+\subsection{Bed and Stairs}
+To test if the thresholds were going to detect a fall correctly we decided to first try throwing the phone on the bed from different distances and throwing it from the stairs. The thresholds were -0.7 for the VVE and 2.8 for the RSS.
+\image{im1.png}{Fall from 50cm, VVE -0.7 and RSS 2.8} 
+\image{im2.png}{Fall from 80cm, VVE -0.7 and RSS 2.8}
+\image{im3.png}{Fall from 120cm, VVE -0.7 and RSS 2.8}
+\image{im4.png}{Fall from 200cm, VVE -0.7 and RSS 2.8}
+\image{im5.png}{Fall from the stairs, VVE -0.7 and RSS 2.8}
+As is shown in figure 1 to 5 no fall was detected no matter what distance was used. Carefully looking at the pictures we can see that the vertical velocity is always very close to the point where a fall should be detected. Because of that we decided to change the threshold value of the VVE from -0.7 to -0.4. To come up with this threshold we let the phone fall from 200cm and check at which point it would recognize a fall. The first time a fall was recognized was when the threshold was -0.4.
+\image{im6.png}{Fall from 200cm, VVE -0.4 and RSS 2.8}
+\image{im7.png}{Fall from stairs, VVE -0.4 and RSS 2.8}
+As shown in the pictures from 6 to 7 the fall was recognized with the new threshold. Because of that it was decided to continue using those thresholds on the following tests.
+
+\subsection{Walking}
+
+In the walking test the phone was placed in the back pocket of a short. The phone was a bit loose, so it could move around a few centimeters. Also, the walking test was performed with the phone in the front pocket of a  jeans but no pictures are available of that particular test. 
+\image{im8.png}{Walking test with the phone in the back pocket of a jeans. VVE -0.4 and RSS 2.8}
+As shown in Figure 8 both the values of the RSS and VVE stay above the threshold as expected.
+
+\subsection{Running}
+To further test the ability of the phone to detect a fall we decided to test the phone while running. The results of that test were a bit mixed. In this test the phone was also placed in the back pocket of a short. Figure 9 shows a fall detected while running. We think this can happen because during the test I removed the phone too fast of the pocket. This resulted in the Posture file going over the threshold and detecting the fall. Figure 11 shows what happens while a person is running and wait a few seconds before taking the phone out of the pocket. Here we see that no fall was detected. Also in this picture we can see that the fall was detected in the beginning of the running and during the running no fall was detected. So this confirms our previous hypothesis that the fall detected in Figure 9 was caused by removing the phone too fast out of the pocket. Figure 10 shows another run with the phone in the back pocket. Here we can see no fall was detected. 
+\image{im9.png}{Fall detected while running. VVE -0.4 and RSS 2.8}
+\image{im10.png}{No fall detected while running. VVE -0.4 and RSS 2.8}
+\image{im11.png}{No fall detected while running and waiting a few seconds to pick up the phone. VVE -0.4 and RSS 2.8}
+
+\subsection{Biking}
+The application was also tested while biking but no pictures are available. But no fall was detected while biking.
+
+\subsection{Conclusion}
+
+The application worked well in the performed tests. The falls that we would like to detect were detected while avoiding false falls. However there was an occasion where a fall was detected while running that wasn’t supposed to happen.  But that was caused by removing the phone too quickly from the pocket. This illustrates that the application can be tricked into detecting a fall where no fall exist. This still is countered up to a certain point by the dialog that is displayed to the user each time a fall is detected. The application has a downside however. While running the application the battery of the phone will be drained very fast. With the Sony Ericsson Xperia x10 the phone life was reduced to around 7 hours when the app was running. Further investigation must be conducted to evaluate if the code can be optimized further to reduce the amount of power drain. Also further investigation should be conducted to see if other Android phones suffer from the same effect as the Xperia.  
+
 
 
 \end{document}
